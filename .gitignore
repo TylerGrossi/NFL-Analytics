@@ -1,0 +1,36 @@
+# generated data — rebuild with `python -m nflx.cli build`
+data/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# node
+node_modules/
+.next/
+out/
+.vercel/
+
+# local visual checks (node shot.mjs)
+shots/
+
+# editors / os
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# secrets — never commit, whatever directory they land in
+.env
+.env.*
+!.env.example
+.dev.vars
+*.pem
+kaggle.json
+
+# build caches
+*.tsbuildinfo
+.wrangler/
+.turbo/

@@ -1,0 +1,7 @@
+nflreadpy>=0.1.5
+polars>=1.30
+pyarrow>=17
+duckdb>=1.1
+requests>=2.32
+scikit-learn>=1.5
+numpy>=1.26

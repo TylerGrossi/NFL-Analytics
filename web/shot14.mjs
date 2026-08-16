@@ -1,0 +1,10 @@
+import { chromium } from "playwright";
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1440, height: 1150 } });
+await page.goto("http://localhost:3000/teams/NE?season=2007", { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+await page.evaluate(() => window.scrollTo(0, 1350));
+await page.waitForTimeout(400);
+await page.screenshot({ path: "../shots/team-history.png" });
+console.log("shot");
+await browser.close();

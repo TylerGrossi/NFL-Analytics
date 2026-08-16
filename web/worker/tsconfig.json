@@ -1,0 +1,18 @@
+{
+  // The Worker runs in workerd, not the browser and not Node. It gets its own
+  // config so the DOM lib and Next's plugin stay out of its scope — and so the
+  // app's tsconfig can keep globbing `**/*.ts` without tripping over it.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "types": ["./worker-configuration.d.ts"]
+  },
+  "include": ["**/*.ts"]
+}

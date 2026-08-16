@@ -1,0 +1,13 @@
+import { chromium } from "playwright";
+const id = process.env.EVENT_ID;
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await page.goto(`http://localhost:3000/games/${id}`, { waitUntil: "networkidle" });
+await page.waitForTimeout(2000);
+await page.screenshot({ path: "../shots/game-live.png" });
+console.log("shot game", id);
+await page.goto("http://localhost:3000/", { waitUntil: "networkidle" });
+await page.waitForTimeout(1200);
+await page.screenshot({ path: "../shots/home.png" });
+console.log("shot home");
+await browser.close();

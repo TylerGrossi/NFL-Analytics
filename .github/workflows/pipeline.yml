@@ -1,0 +1,108 @@
+name: Rebuild data
+
+# nflverse publishes cleaned play-by-play nightly; Thursday's pull is the
+# cleanest of the week because stat corrections have landed by then.
+on:
+  schedule:
+    - cron: "30 10 * * *" # 06:30 ET daily
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Seasons to build (space separated). Blank = default history."
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Build
+        working-directory: pipeline
+        run: |
+          if [ -n "${{ inputs.seasons }}" ]; then
+            python -m nflx.cli build --seasons ${{ inputs.seasons }}
+          else
+            python -m nflx.cli build
+          fi
+
+      - name: Summarize
+        run: |
+          echo "### Data build" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh data/parquet >> $GITHUB_STEP_SUMMARY
+          cat data/json/manifest.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nflx-data
+          path: data/
+          retention-days: 7
+
+  # The whole reason the site can run on Cloudflare: DuckDB's native binding
+  # works here, on Linux, at build time. Every page is rendered against the
+  # parquet store now, and the Worker never needs a database at all.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Secrets are absent on forks, and a fork cannot deploy to our account.
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: nflx-data
+          path: data/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        working-directory: web
+        run: npm ci
+
+      # Prerenders every route against the parquet store. `prebuild` stages the
+      # DuckDB-WASM runtime as a side effect.
+      - name: Build site
+        working-directory: web
+        env:
+          NFLX_DATA_DIR: ${{ github.workspace }}/data
+          NEXT_PUBLIC_PARQUET_BASE: ${{ vars.PARQUET_BASE }}
+        run: npm run build
+
+      # Data first: a page that ships before its parquet does would query a file
+      # that is not there yet.
+      - name: Sync parquet to R2
+        working-directory: web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/sync-r2.mjs
+
+      - name: Deploy Worker and assets
+        working-directory: web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
+
+      - name: Summarize
+        run: |
+          echo "### Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "Assets: $(find web/out -type f | wc -l) files" >> $GITHUB_STEP_SUMMARY
+          echo "Largest: $(find web/out -type f -printf '%s %p\n' | sort -rn | head -1)" >> $GITHUB_STEP_SUMMARY

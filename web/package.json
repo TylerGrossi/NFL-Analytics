@@ -1,0 +1,36 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node scripts/stage-duckdb.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "cf:sync": "node scripts/sync-r2.mjs",
+    "cf:cors": "wrangler r2 bucket cors set hashmark-parquet --file scripts/r2-cors.json",
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy",
+    "cf:typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
+    "@duckdb/node-api": "^1.5.5-r.4",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "playwright": "^1.62.1",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wrangler": "^4.123.0"
+  }
+}
