@@ -36,15 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-# cloudflare
-.wrangler/
-.dev.vars
-
-# staged by scripts/stage-duckdb.mjs on prebuild; both are copies of files that
-# ship inside @duckdb/duckdb-wasm, so they are regenerated, never edited.
-/public/duckdb/
-/.duckdb-r2/
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -49,15 +49,17 @@ jobs:
           path: data/
           retention-days: 7
 
-  # The whole reason the site can run on Cloudflare: DuckDB's native binding
-  # works here, on Linux, at build time. Every page is rendered against the
-  # parquet store now, and the Worker never needs a database at all.
-  deploy:
+  # Vercel builds the site from the repo; it does not need the data, because the
+  # site reads parquet over HTTPS from this Release at request time. Publishing is
+  # therefore the only deploy step here — Vercel redeploys on its own from git.
+  publish:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Secrets are absent on forks, and a fork cannot deploy to our account.
+    # A fork has no write token and must not publish to this repo's releases.
     if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -66,43 +68,13 @@ jobs:
           name: nflx-data
           path: data/
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-
-      - name: Install
-        working-directory: web
-        run: npm ci
-
-      # Prerenders every route against the parquet store. `prebuild` stages the
-      # DuckDB-WASM runtime as a side effect.
-      - name: Build site
-        working-directory: web
+      - name: Publish data store to the release
         env:
-          NFLX_DATA_DIR: ${{ github.workspace }}/data
-          NEXT_PUBLIC_PARQUET_BASE: ${{ vars.PARQUET_BASE }}
-        run: npm run build
-
-      # Data first: a page that ships before its parquet does would query a file
-      # that is not there yet.
-      - name: Sync parquet to R2
-        working-directory: web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node scripts/sync-r2.mjs
-
-      - name: Deploy Worker and assets
-        working-directory: web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-data.mjs
 
       - name: Summarize
         run: |
-          echo "### Deploy" >> $GITHUB_STEP_SUMMARY
-          echo "Assets: $(find web/out -type f | wc -l) files" >> $GITHUB_STEP_SUMMARY
-          echo "Largest: $(find web/out -type f -printf '%s %p\n' | sort -rn | head -1)" >> $GITHUB_STEP_SUMMARY
+          echo "### Data published" >> $GITHUB_STEP_SUMMARY
+          echo "Tag: ${NFLX_DATA_TAG:-data-latest}" >> $GITHUB_STEP_SUMMARY
+          echo "Assets: $(find data -name '*.parquet' -o -name '*.json' | wc -l)" >> $GITHUB_STEP_SUMMARY

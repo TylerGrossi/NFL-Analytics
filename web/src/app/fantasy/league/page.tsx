@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
 import { FreeAgentPanel, LineupPanel, MatchupPanel } from "@/components/LeagueTools";
 import {
   ScoreboardPanel,
@@ -126,7 +126,7 @@ export default async function LeaguePage({
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           league
             ? `${league.teamCount} teams · ${league.scoring.toUpperCase()} · ${league.season}`
@@ -134,7 +134,7 @@ export default async function LeaguePage({
         }
       >
         {league ? league.name : "Your league"}
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Connect Sleeper and every tool on the site re-points at your actual roster. Nothing is

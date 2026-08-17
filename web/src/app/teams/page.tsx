@@ -32,7 +32,7 @@ export default async function TeamsPage({
 
   return (
     <>
-      <SectionRule aside={`${season} · sorted by net rating`}>Teams</SectionRule>
+      <SectionRule>Teams</SectionRule>
 
       <SeasonNav seasons={seasons} active={season} href={(s) => `/teams?season=${s}`} />
 

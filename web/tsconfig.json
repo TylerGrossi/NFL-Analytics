@@ -30,7 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  // The Worker compiles against Cloudflare's globals, not the DOM/Next ones, so
-  // it carries its own tsconfig (worker/tsconfig.json) and is kept out of here.
-  "exclude": ["node_modules", "worker"]
+  "exclude": ["node_modules"]
 }

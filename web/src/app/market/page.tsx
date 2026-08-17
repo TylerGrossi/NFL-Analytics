@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getManifest,
   getMarketDisagreements,
@@ -25,7 +25,7 @@ export default async function MarketPage() {
   if (!v) {
     return (
       <>
-        <SectionRule>Model vs market</SectionRule>
+        <PageHead>Model vs market</PageHead>
         <Empty>The market backtest has not been built yet. Run the pipeline.</Empty>
       </>
     );
@@ -41,16 +41,16 @@ export default async function MarketPage() {
 
   return (
     <>
-      <SectionRule aside={`${v.first_season}–${v.last_season} · walk-forward`}>
+      <PageHead aside={`${v.first_season}–${v.last_season} · walk-forward`}>
         Model vs market
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         The projection against the closing line, backtested on {v.games.toLocaleString()} games it
         never trained on.
       </Deck>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(190px,1fr))] mb-4">
+      <StatRow className="mb-5">
         <StatTile
           label="Model error"
           value={num(v.model.rmse, 2)}
@@ -78,7 +78,7 @@ export default async function MarketPage() {
           value={num(v.correlation_with_line, 3)}
           meta="correlation of projected margin"
         />
-      </div>
+      </StatRow>
 
       <div className="panel px-4 py-3 mb-4 text-[12.5px] text-ink-2">
         <b className="text-ink">The honest headline:</b> the market is better. Over{" "}

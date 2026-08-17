@@ -150,12 +150,15 @@ full catalog, update cadence and licensing notes.
 
 ## Deploying
 
-The target is **Cloudflare**. See `CLOUDFLARE.md` for the architecture, the commands and what is
-still outstanding — read it before deploying anywhere.
+The target is **Vercel**, with the data store on a **GitHub Release**. See
+[docs/deploy.md](docs/deploy.md) for the setup steps and what is still unverified.
 
-The short version: DuckDB's native binding cannot run in a Workers isolate, so it never runs in
-production. The nightly GitHub Action prerenders every route against the parquet store at build time
-(where the native binding works), pushes parquet and the DuckDB-WASM runtime to R2, and deploys
-static assets plus a small Worker. The Worker handles only live ESPN state; the interactive
-surfaces (`/lab`, `/stats`, season switching) query the same parquet from the browser over
-DuckDB-WASM. Cost is $0/month on the free tier.
+The short version: the app deploys unchanged — Vercel runs Node, so DuckDB's native binding works
+and every route keeps rendering server-side exactly as it does locally. The data does *not* ship
+with it. The store is ~150 MB and changes nightly, which is wrong for both git history and a
+serverless bundle (Vercel caps a function at 250 MB uncompressed). Instead the nightly Action
+publishes parquet to a Release and the site reads it over HTTPS through DuckDB's `httpfs`, which
+fetches only the byte ranges a query touches.
+
+Set `NFLX_DATA_URL` to the Release download base to turn remote reads on. Leave it unset locally and
+the app reads `../data` off disk at full speed, so the dev loop is unchanged.

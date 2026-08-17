@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DraftBoard } from "@/components/DraftBoard";
-import { Deck, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, PageHead, Panel, TeamMark } from "@/components/ui";
 import {
   getDraftBoard,
   getFantasySos,
@@ -57,7 +57,7 @@ export default async function FantasyDraftPage() {
   if (rows.length === 0) {
     return (
       <>
-        <SectionRule>Draft board</SectionRule>
+        <PageHead>Draft board</PageHead>
         <Empty>The draft board has not been built yet.</Empty>
       </>
     );
@@ -65,7 +65,7 @@ export default async function FantasyDraftPage() {
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           <span className="flex gap-3">
             <Link href="/fantasy/espn" className="text-accent">
@@ -78,7 +78,7 @@ export default async function FantasyDraftPage() {
         }
       >
         {season} draft board
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Set your league and the board re-ranks — scoring, roster size, superflex, TE premium.

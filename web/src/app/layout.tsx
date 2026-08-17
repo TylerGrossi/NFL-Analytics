@@ -4,6 +4,7 @@ import "./globals.css";
 import { Brand, BrandMark } from "@/components/Brand";
 import { MainNav, MobileNav } from "@/components/MainNav";
 import { PlayerSearch } from "@/components/PlayerSearch";
+import { SortableTables } from "@/components/SortableTables";
 import { getManifest } from "@/lib/queries";
 import { SITE } from "@/lib/site";
 
@@ -31,7 +32,9 @@ export const metadata: Metadata = {
   // Set NEXT_PUBLIC_SITE_URL in the deploy environment; localhost is only the
   // development fallback.
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s · ${SITE.name}` },
+  // The tab shows the name alone. A tagline after an em dash is truncated to
+  // noise at tab width, and the name is what someone scans a tab strip for.
+  title: { default: SITE.name, template: `%s · ${SITE.name}` },
   description: SITE.description,
   openGraph: {
     siteName: SITE.name,
@@ -64,6 +67,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen flex flex-col">
+        {/* Upgrades every `.grid-table` in place — see the component. */}
+        <SortableTables />
         <header>
           {/* Identity, section nav, search. Provenance lives in the footer. */}
           <div className="sticky top-0 z-50 bg-navy border-b border-white/10">
@@ -92,43 +97,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main className="mx-auto w-full max-w-[1440px] px-5 py-6 pb-20 flex-1">{children}</main>
 
         <footer className="border-t border-rule bg-panel mt-auto">
-          <div className="mx-auto max-w-[1440px] px-5 py-7 flex gap-8 flex-wrap justify-between">
-            <div className="max-w-[62ch]">
-              <div className="flex items-center gap-2 mb-2 text-navy">
-                <BrandMark size={16} />
-                <span className="headline text-[14px]">{SITE.name}</span>
-              </div>
-              <p className="text-[11.5px] text-ink-3 leading-relaxed m-0">
-                Play-by-play, rosters and advanced stats from{" "}
-                <a href="https://nflverse.nflverse.com/" className="text-accent">nflverse</a>;
-                tracking-derived metrics from NFL Next Gen Stats; coverage and pressure data from
-                Pro Football Reference; contracts from Over The Cap; live game state from ESPN.
-                Team logos and player headshots are property of their respective clubs and the NFL.
+          <div className="mx-auto max-w-[1440px] px-5 py-7">
+            <div className="flex items-center gap-2 mb-2 text-navy">
+              <BrandMark size={16} />
+              <span className="headline text-[14px]">{SITE.name}</span>
+            </div>
+            <p className="text-[11.5px] text-ink-3 leading-relaxed m-0 max-w-[86ch]">
+              Play-by-play, rosters and advanced stats from{" "}
+              <a href="https://nflverse.nflverse.com/" className="text-accent">nflverse</a>;
+              tracking-derived metrics from NFL Next Gen Stats; coverage and pressure data from
+              Pro Football Reference; contracts from Over The Cap; live game state from ESPN.
+              Team logos and player headshots are property of their respective clubs and the NFL.
+            </p>
+
+            {/* Coverage and build time as one line rather than a labelled table
+                floated off to the right. The figures are the reason this is
+                here — a reader checking freshness wants to read them, not to
+                match five captions against five values across a gap. */}
+            {manifest && (
+              <p className="text-[11.5px] text-ink-3 m-0 mt-3.5 pt-3 border-t border-rule">
+                <span className="num text-ink-2">
+                  {manifest.seasons[0]}–{manifest.seasons[manifest.seasons.length - 1]}
+                </span>
+                {coverage && (
+                  <>
+                    {" · "}
+                    <span className="num text-ink-2">
+                      {coverage.plays.toLocaleString("en-US")}
+                    </span>{" "}
+                    plays{" · "}
+                    <span className="num text-ink-2">
+                      {coverage.games.toLocaleString("en-US")}
+                    </span>{" "}
+                    games{" · "}
+                    <span className="num text-ink-2">
+                      {coverage.players.toLocaleString("en-US")}
+                    </span>{" "}
+                    players
+                  </>
+                )}
+                {" · built "}
+                <span className="num text-ink-2">{built}</span>
               </p>
-            </div>
-            <div className="text-[11.5px] text-ink-3">
-              <div className="label mb-1.5">Data</div>
-              {manifest && (
-                <dl className="grid grid-cols-[auto_auto] gap-x-4 gap-y-1 m-0">
-                  <dt>Seasons</dt>
-                  <dd className="num text-ink-2 m-0">
-                    {manifest.seasons[0]}–{manifest.seasons[manifest.seasons.length - 1]}
-                  </dd>
-                  {coverage && (
-                    <>
-                      <dt>Plays</dt>
-                      <dd className="num text-ink-2 m-0">{coverage.plays.toLocaleString("en-US")}</dd>
-                      <dt>Games</dt>
-                      <dd className="num text-ink-2 m-0">{coverage.games.toLocaleString("en-US")}</dd>
-                      <dt>Players</dt>
-                      <dd className="num text-ink-2 m-0">{coverage.players.toLocaleString("en-US")}</dd>
-                    </>
-                  )}
-                  <dt>Built</dt>
-                  <dd className="num text-ink-2 m-0">{built}</dd>
-                </dl>
-              )}
-            </div>
+            )}
           </div>
         </footer>
       </body>

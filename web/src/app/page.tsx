@@ -1,16 +1,24 @@
 import Link from "next/link";
-import { Panel, RankChip, SectionRule, StatTile, TeamMark, DivergingBar } from "@/components/ui";
+import {
+  Deck,
+  Footnote,
+  PageHead,
+  Panel,
+  RankChip,
+  SectionRule,
+  TeamMark,
+  DivergingBar,
+} from "@/components/ui";
 import { getScoreboard } from "@/lib/espn";
 import {
   getGames,
   getLeaders,
-  getLeaguePulse,
   getManifest,
   getStandings,
   getTeamMap,
   getTeamSeasons,
 } from "@/lib/queries";
-import { gameDate, int, num, pct, pts, signed, line } from "@/lib/format";
+import { gameDate, int, num, pts, signed, line } from "@/lib/format";
 
 export const revalidate = 60;
 
@@ -18,12 +26,11 @@ export default async function HomePage() {
   const manifest = await getManifest();
   const season = manifest.stats_season;
 
-  const [teams, standings, efficiency, pulse, qbLeaders, live, upcoming] = await Promise.all([
+  const [teams, standings, efficiency, qbLeaders, live, upcoming] = await Promise.all([
     getTeamMap(),
     getStandings(season),
     getTeamSeasons(season),
-    getLeaguePulse(season),
-    getLeaders("qb-epa", season, 8),
+    getLeaders("qb-epa", season, 10),
     getScoreboard(),
     getGames(manifest.scheduled_season, 1),
   ]);
@@ -36,9 +43,7 @@ export default async function HomePage() {
     <>
       {inProgress.length > 0 && (
         <>
-          <SectionRule aside={offseason ? "preseason — not included in any stat on this page" : "from ESPN, refreshed every 30s"}>
-            Live now
-          </SectionRule>
+          <SectionRule>Live now</SectionRule>
           <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
             {inProgress.map((g) => (
               <Link
@@ -68,28 +73,25 @@ export default async function HomePage() {
               </Link>
             ))}
           </div>
+          <Footnote>
+            {offseason
+              ? "Preseason — not included in any stat on this page."
+              : "From ESPN, refreshed every 30 seconds."}
+          </Footnote>
         </>
       )}
 
-      <SectionRule aside={`${int(pulse?.plays)} scrimmage plays`}>
-        {season} league averages
-      </SectionRule>
-      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(155px,1fr))]">
-        <StatTile label="Pass EPA / play" value={signed(pulse?.pass_epa ?? null)} meta="all dropbacks" />
-        <StatTile label="Rush EPA / play" value={signed(pulse?.rush_epa ?? null)} meta="designed runs" />
-        <StatTile label="Success rate" value={pct(pulse?.success ?? null)} meta="EPA > 0" />
-        <StatTile label="Explosive rate" value={pct(pulse?.explosive_rate ?? null)} meta="20+ pass / 10+ rush" />
-        <StatTile label="Pass rate" value={pct(pulse?.pass_rate ?? null)} meta="of scrimmage plays" />
-        <StatTile
-          label={offseason ? "Next kickoff" : "Week"}
-          value={offseason ? `Wk 1` : String(manifest.season_state.current_week)}
-          meta={offseason ? gameDate(upcoming[0]?.gameday) : `${manifest.scheduled_season} season`}
-        />
-      </div>
+      <PageHead>The NFL, counted from the play up.</PageHead>
+      <Deck>
+        {int(manifest.coverage?.plays)} play-by-play records, rebuilt nightly into team efficiency,
+        player value and win probability.
+      </Deck>
 
-      <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr] mt-7">
+      {/* Equal tracks, and the same team-mark size in both tables, so the two
+          columns end level instead of leaving a hole down the right of the page. */}
+      <div className="grid gap-4 lg:grid-cols-2 mt-6">
         <div>
-          <SectionRule aside="opponent-adjusted EPA per play">Efficiency leaders</SectionRule>
+          <SectionRule>Efficiency leaders</SectionRule>
           <Panel>
             <div className="scroll-x">
               <table className="grid-table">
@@ -141,10 +143,11 @@ export default async function HomePage() {
               </table>
             </div>
           </Panel>
+          <Footnote>Opponent-adjusted EPA per play.</Footnote>
         </div>
 
         <div>
-          <SectionRule aside="min. 150 dropbacks">Quarterback value</SectionRule>
+          <SectionRule>Quarterback value</SectionRule>
           <Panel>
             <div className="scroll-x">
               <table className="grid-table">
@@ -164,7 +167,6 @@ export default async function HomePage() {
                           <TeamMark
                             team={String(p.recent_team)}
                             logo={teams[String(p.recent_team)]?.logo}
-                            size={17}
                             showAbbr={false}
                           />
                           <span className="font-medium">{String(p.player_display_name)}</span>
@@ -179,45 +181,48 @@ export default async function HomePage() {
               </table>
             </div>
           </Panel>
+          <Footnote>Minimum 150 dropbacks.</Footnote>
         </div>
       </div>
 
       {offseason && upcoming.length > 0 && (
         <>
-          <SectionRule aside={`${manifest.scheduled_season} season opens`}>Week 1</SectionRule>
-          <Panel>
-            <div className="scroll-x">
-              <table className="grid-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Away</th>
-                    <th>Home</th>
-                    <th>Line</th>
-                    <th>Total</th>
-                    <th>Stadium</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcoming.map((g) => (
-                    <tr key={g.game_id}>
-                      <td className="text-ink-2">{gameDate(g.gameday)}</td>
-                      <td>
-                        <TeamMark team={g.away_team} logo={teams[g.away_team]?.logo} href={`/teams/${g.away_team}`} />
-                      </td>
-                      <td>
-                        <TeamMark team={g.home_team} logo={teams[g.home_team]?.logo} href={`/teams/${g.home_team}`} />
-                      </td>
-                      <td className="num text-ink-2">
-                        {line(g.spread_line)}
-                      </td>
-                      <td className="num text-ink-2">{g.total_line ?? "—"}</td>
-                      <td className="text-ink-3 text-[12px]">{g.stadium}</td>
+          <SectionRule>Week 1</SectionRule>
+          {/* Seventeen games across the full page width leaves every column
+              stranded in whitespace. Two halves side by side fill the measure
+              and halve the distance the eye travels from date to line. */}
+          <Panel bodyClass="grid md:grid-cols-2 gap-px bg-rule">
+            {[upcoming.slice(0, Math.ceil(upcoming.length / 2)),
+              upcoming.slice(Math.ceil(upcoming.length / 2))].map((half, i) => (
+              <div key={i} className="bg-panel scroll-x">
+                <table className="grid-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th className="l">Away</th>
+                      <th className="l">Home</th>
+                      <th>Line</th>
+                      <th>Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {half.map((g) => (
+                      <tr key={g.game_id}>
+                        <td className="text-ink-2 whitespace-nowrap">{gameDate(g.gameday)}</td>
+                        <td className="l">
+                          <TeamMark team={g.away_team} logo={teams[g.away_team]?.logo} href={`/teams/${g.away_team}`} />
+                        </td>
+                        <td className="l">
+                          <TeamMark team={g.home_team} logo={teams[g.home_team]?.logo} href={`/teams/${g.home_team}`} />
+                        </td>
+                        <td className="num text-ink-2">{line(g.spread_line)}</td>
+                        <td className="num text-ink-2">{g.total_line ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
           </Panel>
         </>
       )}

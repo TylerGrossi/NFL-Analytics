@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PickCurrency } from "@/components/PickCurrency";
-import { Deck, Empty, Notes, Panel, SectionRule, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, Panel, PageHead, SectionRule, StatRow, StatTile, TeamMark } from "@/components/ui";
 import { PickCurve } from "@/components/PickCurve";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
@@ -48,11 +48,11 @@ export default async function DraftPage({
 
   return (
     <>
-      <SectionRule aside={`${int(curve.length)} slots · 1999–${newest}`}>Draft</SectionRule>
+      <PageHead aside={`${int(curve.length)} slots · 1999–${newest}`}>Draft</PageHead>
 
       <Deck>What a pick is actually worth, across twenty-seven drafts.</Deck>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(190px,1fr))] mb-4">
+      <StatRow className="mb-5">
         <StatTile label="Pick 1" value={num(at(1)?.value, 1)} meta="expected career AV" />
         <StatTile label="Pick 32" value={num(at(32)?.value, 1)} meta="expected career AV" />
         <StatTile
@@ -70,7 +70,7 @@ export default async function DraftPage({
           value={pct(at(200)?.contributor_rate, 0)}
           meta="reach 48 career games"
         />
-      </div>
+      </StatRow>
 
       <Panel
         title="What each slot returns"

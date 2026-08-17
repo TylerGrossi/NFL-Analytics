@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, DivergingBar, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, DivergingBar, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getBuiltSeasons,
   getManifest,
@@ -96,7 +96,7 @@ export default async function LabPage({
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           baseline
             ? `${int(baseline.plays)} plays match · league ${signed(baseline.epa)} EPA`
@@ -104,7 +104,7 @@ export default async function LabPage({
         }
       >
         Lab
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Ask your own question of {charted ? "343,000 charted plays" : "1.28 million plays"} — every

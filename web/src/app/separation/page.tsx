@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getCoverageLeaders,
   getSeparationLeaders,
@@ -56,9 +56,9 @@ export default async function SeparationPage({
 
   return (
     <>
-      <SectionRule aside={`${season} · 100 is average, 15 points a standard deviation`}>
+      <PageHead aside={`${season} · 100 is average, 15 points a standard deviation`}>
         Separation &amp; coverage
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Both sides scored against what their target depth predicts, because raw separation mostly

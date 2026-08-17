@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getCoachBaseline,
   getCoachCareers,
@@ -45,7 +45,7 @@ export default async function CoachesPage({
   if (rows.length === 0) {
     return (
       <>
-        <SectionRule>Coaches</SectionRule>
+        <PageHead>Coaches</PageHead>
         <Empty>Coach tables have not been built yet. Run the pipeline.</Empty>
       </>
     );
@@ -53,16 +53,16 @@ export default async function CoachesPage({
 
   return (
     <>
-      <SectionRule aside={`1999–${manifest.stats_season} · ${MIN_GAMES}+ games`}>
+      <PageHead aside={`1999–${manifest.stats_season} · ${MIN_GAMES}+ games`}>
         Coaches
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Aggressiveness, pass tendency and predictability — followed across every club a coach has
         led, not just his current one.
       </Deck>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(190px,1fr))] mb-4">
+      <StatRow className="mb-5">
         <StatTile label="Coaches tracked" value={String(rows.length)} meta={`${MIN_GAMES}+ games`} />
         {extremes.unpredictable && (
           <StatTile
@@ -85,7 +85,7 @@ export default async function CoachesPage({
             meta={`goes ${pct(extremes.boldest.value, 0)} of the time the model says go`}
           />
         )}
-      </div>
+      </StatRow>
 
       <div className="flex gap-1.5 flex-wrap mb-4">
         {SORTS.map((s) => (

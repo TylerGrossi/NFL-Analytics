@@ -1,7 +1,13 @@
-import fs from "node:fs";
-import path from "node:path";
 import { cache } from "react";
-import { JSON_DIR, PARQUET_DIR, pbpGlob, query, queryOne, table } from "./db";
+import {
+  chartedSpan,
+  pbpGlob,
+  pbpSpan,
+  query,
+  queryOne,
+  readDataJson,
+  table,
+} from "./db";
 
 /** Every page's data access lives here so SQL never leaks into components. */
 
@@ -65,8 +71,9 @@ export type PlayerSeasonRow = Record<string, number | string | boolean | null> &
 // ----------------------------------------------------------------- manifest
 
 export const getManifest = cache(async (): Promise<Manifest> => {
-  const p = path.join(JSON_DIR, "manifest.json");
-  return JSON.parse(fs.readFileSync(p, "utf-8"));
+  const m = await readDataJson<Manifest>("manifest.json");
+  if (!m) throw new Error("manifest.json is missing — run the pipeline, or check NFLX_DATA_URL");
+  return m;
 });
 
 /** Every season with team efficiency built — drives the season pickers. */
@@ -187,7 +194,7 @@ export const getTeamWeeklyEpa = cache(async (season: number, team: string) => {
   return query<{ week: number; off_epa: number | null; def_epa: number | null; plays: number }>(
     `with plays as (
        select week, posteam, defteam, epa
-       from read_parquet('${pbpGlob(season)}')
+       from read_parquet(${pbpGlob(season)})
        where play_type in ('pass','run') and epa is not null and season_type='REG'
      )
      select week,
@@ -379,7 +386,7 @@ export const getLeaguePulse = cache(async (season: number) => {
             avg(case when (play_type='pass' and yards_gained>=20)
                        or (play_type='run' and yards_gained>=10) then 1.0 else 0.0 end) as explosive_rate,
             avg(case when play_type='pass' then 1.0 else 0.0 end) as pass_rate
-     from read_parquet('${pbpGlob(season)}')
+     from read_parquet(${pbpGlob(season)})
      where play_type in ('pass','run') and epa is not null and season_type='REG'`
   );
 });
@@ -553,7 +560,7 @@ export const getGameWinProbability = cache(async (season: number, gameId: string
             coalesce(touchdown, 0) = 1
               or coalesce(field_goal_result, '') = 'made'
               as scoring
-     from read_parquet('${pbpGlob(season)}')
+     from read_parquet(${pbpGlob(season)})
      where game_id = $1 and wp is not null
        -- Timeouts, "END QUARTER" and "GAME" rows carry a win probability but no
        -- possession team. \`posteam = home_team\` is then NULL, which is not true,
@@ -578,7 +585,7 @@ export const getGameDrives = cache(async (season: number, gameId: string) => {
             sum(case when play_type in ('pass','run') then epa else 0 end) as epa,
             max(yardline_100) as start_yardline,
             min(qtr) as qtr
-     from read_parquet('${pbpGlob(season)}')
+     from read_parquet(${pbpGlob(season)})
      where game_id = $1 and fixed_drive is not null and posteam is not null
      group by fixed_drive
      order by fixed_drive`,
@@ -593,7 +600,7 @@ export const getGameTopPlays = cache(async (season: number, gameId: string, limi
     epa: number; wpa: number; down: number | null; ydstogo: number | null;
   }>(
     `select play_id, qtr, posteam, "desc", epa, wpa, down, ydstogo
-     from read_parquet('${pbpGlob(season)}')
+     from read_parquet(${pbpGlob(season)})
      where game_id = $1 and wpa is not null and play_type in ('pass','run','field_goal','punt')
      order by abs(wpa) desc limit ${Number(limit)}`,
     [gameId]
@@ -628,7 +635,7 @@ export const getGameTeamSummary = cache(async (season: number, gameId: string) =
             sum(coalesce(qb_dropback,0))::INT as dropbacks,
             sum(coalesce(sack,0))::INT as sacks,
             avg(case when down=3 then coalesce(third_down_converted,0) end) as third_conv
-     from read_parquet('${pbpGlob(season)}')
+     from read_parquet(${pbpGlob(season)})
      where game_id = $1 and play_type in ('pass','run') and epa is not null
      group by posteam`,
     [gameId]
@@ -695,13 +702,7 @@ export type WarValidation = {
 };
 
 export const getWarValidation = cache(async (): Promise<WarValidation | null> => {
-  try {
-    return JSON.parse(
-      fs.readFileSync(path.join(JSON_DIR, "war_validation.json"), "utf-8")
-    );
-  } catch {
-    return null;
-  }
+  return readDataJson<WarValidation>("war_validation.json");
 });
 
 /**
@@ -1645,7 +1646,7 @@ export const getWeekBigPlays = cache(
   async (season: number, week: number, limit = 10): Promise<BigPlay[]> => {
     return query<BigPlay>(
       `select play_id, game_id, posteam, defteam, qtr, "desc", wpa, epa
-       from read_parquet('${pbpGlob(season)}')
+       from read_parquet(${pbpGlob(season)})
        where season = $1 and week = $2 and wpa is not null and "desc" is not null
        order by abs(wpa) desc limit ${Number(limit)}`,
       [season, week]
@@ -1669,7 +1670,7 @@ export const getWeekTeamSwings = cache(
     return query<TeamWeek>(
       `with plays as (
          select posteam as team, week, epa
-         from read_parquet('${pbpGlob(season)}')
+         from read_parquet(${pbpGlob(season)})
          where season = $1 and posteam is not null and epa is not null
            and play_type in ('pass','run')
        ),
@@ -1843,11 +1844,7 @@ export type MarketValidation = {
 };
 
 export const getMarketValidation = cache(async (): Promise<MarketValidation | null> => {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(JSON_DIR, "market_validation.json"), "utf-8"));
-  } catch {
-    return null;
-  }
+  return readDataJson<MarketValidation>("market_validation.json");
 });
 
 export type MarketTeam = {
@@ -2007,10 +2004,9 @@ export type SplitRow = {
   yards: number;
 };
 
-/** Files for the charted store, which only covers seasons with participation. */
-function chartedGlob(): string {
-  return path.join(PARQUET_DIR, "charted", "*.parquet").replace(/\\/g, "/");
-}
+// `chartedGlob` now lives in db.ts alongside `pbpGlob`, because both have to
+// switch between a filesystem glob and an explicit URL list depending on where
+// the store is. Re-exported here so existing call sites keep working.
 
 /**
  * Arbitrary split over the play store.
@@ -2030,7 +2026,9 @@ export const runSplitQuery = cache(
     minPlays: number;
     limit: number;
   }): Promise<SplitRow[]> => {
-    const source = opts.charted ? chartedGlob() : pbpGlob();
+    const source = opts.charted
+      ? chartedSpan(Number(opts.seasonFrom), Number(opts.seasonTo))
+      : pbpSpan(Number(opts.seasonFrom), Number(opts.seasonTo));
     const clauses = [
       `season between ${Number(opts.seasonFrom)} and ${Number(opts.seasonTo)}`,
       "epa is not null",
@@ -2051,7 +2049,7 @@ export const runSplitQuery = cache(
                        then 1.0 else 0.0 end) as explosive,
               avg(cpoe) as cpoe,
               avg(yards_gained) as yards
-       from read_parquet('${source}')
+       from read_parquet(${source})
        where ${clauses.join(" and ")}
        group by ${opts.groupColumn}
        having count(*) >= ${Number(opts.minPlays)}
@@ -2084,7 +2082,9 @@ export const runSplitBaseline = cache(
     where: string[];
     requires?: string;
   }) => {
-    const source = opts.charted ? chartedGlob() : pbpGlob();
+    const source = opts.charted
+      ? chartedSpan(Number(opts.seasonFrom), Number(opts.seasonTo))
+      : pbpSpan(Number(opts.seasonFrom), Number(opts.seasonTo));
     const clauses = [
       `season between ${Number(opts.seasonFrom)} and ${Number(opts.seasonTo)}`,
       "epa is not null",
@@ -2099,7 +2099,7 @@ export const runSplitBaseline = cache(
               avg(case when (play_type = 'pass' and yards_gained >= 20)
                          or (play_type = 'run' and yards_gained >= 10)
                        then 1.0 else 0.0 end) as explosive
-       from read_parquet('${source}')
+       from read_parquet(${source})
        where ${clauses.join(" and ")}`
     );
   }

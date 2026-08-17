@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArmchairGM } from "@/components/ArmchairGM";
-import { Deck, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getCapSummary,
   getCapTable,
@@ -40,9 +40,9 @@ export default async function ArmchairGmPage({
 
   return (
     <>
-      <SectionRule aside={`${season} league year · cap $${num(teamSummary?.cap_limit ?? 0, 1)}M`}>
+      <PageHead aside={`${season} league year · cap $${num(teamSummary?.cap_limit ?? 0, 1)}M`}>
         Armchair GM
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Cut or restructure anyone and every total moves with it — real Over The Cap accounting, with

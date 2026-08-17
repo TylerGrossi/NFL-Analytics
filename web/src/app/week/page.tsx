@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Empty, SectionRule } from "@/components/ui";
+import { Empty, PageHead } from "@/components/ui";
 import { getPlayedWeeks } from "@/lib/queries";
 
 export const metadata = { title: "This week" };
@@ -11,7 +11,7 @@ export default async function WeekIndex() {
   if (weeks.length === 0) {
     return (
       <>
-        <SectionRule>This week</SectionRule>
+        <PageHead>This week</PageHead>
         <Empty>No completed games in the store yet.</Empty>
       </>
     );

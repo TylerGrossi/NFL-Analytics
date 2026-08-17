@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, DivergingBar, Empty, Notes, Panel, SectionRule, StatTile } from "@/components/ui";
+import { Deck, DivergingBar, Empty, Notes, Panel, PageHead, StatRow, StatTile } from "@/components/ui";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
   getFantasyRegression,
@@ -52,7 +52,7 @@ export default async function FantasyPage({
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           <Link href="/fantasy/draft" className="text-accent">
             Draft board →
@@ -60,7 +60,7 @@ export default async function FantasyPage({
         }
       >
         Fantasy
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Value over replacement, not raw points — each player priced against the freely available
@@ -95,7 +95,7 @@ export default async function FantasyPage({
         <span className="text-accent text-[13px] shrink-0">Open →</span>
       </Link>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(150px,1fr))] mb-4">
+      <StatRow className="mb-5">
         {replacement.map((r) => (
           <StatTile
             key={r.position}
@@ -104,7 +104,7 @@ export default async function FantasyPage({
             meta={`points per game · ${r.position}${r.replacement_rank}`}
           />
         ))}
-      </div>
+      </StatRow>
 
       <SeasonNav seasons={seasons} active={season} href={(s) => href({ season: s })} />
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, Panel, PageHead, StatTile, TeamMark } from "@/components/ui";
 import {
   getAllTimeSeasons,
   getCareerWar,
@@ -138,7 +138,7 @@ export default async function WarPage({
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           view === "season"
             ? `${season} regular season`
@@ -146,7 +146,7 @@ export default async function WarPage({
         }
       >
         Wins above replacement
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         Credit for every snap, allocated across all eight roles — passer, carrier, receiver,
@@ -319,13 +319,12 @@ export default async function WarPage({
         <div className="flex flex-col gap-4 lg:sticky lg:top-4">
           {validation && (
             <>
-              <div className="grid gap-3 grid-cols-2">
-                <StatTile
-                  label="Points per win"
-                  value={num(validation.points_per_win, 1)}
-                  meta="PAR ÷ this = WAR"
-                />
-              </div>
+              <StatTile
+                standalone
+                label="Points per win"
+                value={num(validation.points_per_win, 1)}
+                meta="PAR ÷ this = WAR"
+              />
 
               <Panel title="Backtests" meta="published either way">
                 <div className="px-4 py-2">

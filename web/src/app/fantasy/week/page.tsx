@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getFantasyWeek,
   getFantasyWeeks,
@@ -44,7 +44,7 @@ export default async function FantasyWeekPage({
   if (weeks.length === 0) {
     return (
       <>
-        <SectionRule>Start / sit</SectionRule>
+        <PageHead>Start / sit</PageHead>
         <Empty>
           The in-season tables have not been built yet. Run the pipeline once the schedule and
           draft board exist.
@@ -84,7 +84,7 @@ export default async function FantasyWeekPage({
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           <Link href="/fantasy/draft" className="text-accent">
             Draft board
@@ -92,11 +92,11 @@ export default async function FantasyWeekPage({
         }
       >
         Start / sit · {manifest.scheduled_season}
-      </SectionRule>
+      </PageHead>
 
       <Deck>A scoring rate times the draw — and the draw is worth less than the industry sells.</Deck>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(200px,1fr))] mb-4">
+      <StatRow className="mb-5">
         <StatTile
           label="Matchup, quarterbacks"
           value="0.26"
@@ -109,7 +109,7 @@ export default async function FantasyWeekPage({
           value={anyPlayed ? "blended" : "projected"}
           meta={anyPlayed ? "season to date plus projection" : "no games played yet"}
         />
-      </div>
+      </StatRow>
 
       <div className="flex gap-1.5 flex-wrap mb-3">
         {VIEWS.map((v) => (

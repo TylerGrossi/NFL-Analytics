@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, DivergingBar, Empty, Panel, SectionRule, StatTile } from "@/components/ui";
+import { Deck, DivergingBar, Empty, PageHead, Panel, StatRow, StatTile } from "@/components/ui";
 import { getEspnValue, type EspnValueRow } from "@/lib/queries";
 import { num } from "@/lib/format";
 
@@ -14,7 +14,7 @@ export default async function EspnValuePage() {
   if (rows.length === 0) {
     return (
       <>
-        <SectionRule>ESPN league value</SectionRule>
+        <PageHead>ESPN league value</PageHead>
         <Empty>ESPN draft positions have not been fetched yet.</Empty>
       </>
     );
@@ -34,7 +34,7 @@ export default async function EspnValuePage() {
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           <Link href="/fantasy/draft" className="text-accent">
             Draft board
@@ -42,14 +42,14 @@ export default async function EspnValuePage() {
         }
       >
         ESPN league value · {season}
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         ESPN&apos;s board is not one more opinion — it is a model of the room you are drafting
         against.
       </Deck>
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(190px,1fr))] mb-4">
+      <StatRow className="mb-5">
         <StatTile
           label="Biggest ESPN bargain"
           value={biggest?.name ?? "—"}
@@ -65,7 +65,7 @@ export default async function EspnValuePage() {
             tone={b.mean > 3 ? "good" : b.mean < -3 ? "bad" : "neutral"}
           />
         ))}
-      </div>
+      </StatRow>
 
       <div className="grid gap-4 lg:grid-cols-2 items-start">
         <ValueTable

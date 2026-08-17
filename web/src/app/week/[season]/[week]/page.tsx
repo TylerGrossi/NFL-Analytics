@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Deck, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getPlayedWeeks,
   getTeamMap,
@@ -58,12 +58,12 @@ export default async function WeekPage({
   const older = idx >= 0 && idx < weeks.length - 1 ? weeks[idx + 1] : null;
 
   const best = swings.slice(0, 5);
-  const worst = swings.slice(-5).reverse();
+  const worst = swings.slice(Math.max(best.length, swings.length - 5)).reverse();
   const wpLost = misses.reduce((a, b) => a + b.wp_lost, 0);
 
   return (
     <>
-      <SectionRule
+      <PageHead
         aside={
           <span className="flex gap-3">
             {older && (
@@ -80,7 +80,7 @@ export default async function WeekPage({
         }
       >
         {weekLabel(week)} · {season}
-      </SectionRule>
+      </PageHead>
 
       <Deck>
         What actually moved — the biggest swings, the worst decisions, and the results the market

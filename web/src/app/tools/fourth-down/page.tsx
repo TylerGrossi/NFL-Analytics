@@ -1,5 +1,5 @@
 import { FourthDownCalculator } from "@/components/FourthDownCalculator";
-import { Deck, Notes, Panel, SectionRule, TeamMark, StatTile } from "@/components/ui";
+import { Deck, Notes, Panel, PageHead, SectionRule, TeamMark, StatTile } from "@/components/ui";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
   getBuiltSeasons,
@@ -46,7 +46,7 @@ export default async function FourthDownPage({
 
   return (
     <>
-      <SectionRule aside={`${season} · win probability model`}>Fourth down</SectionRule>
+      <PageHead aside={`${season} · win probability model`}>Fourth down</PageHead>
 
       <Deck>
         Go, kick or punt — each priced in the same currency, the chance the team in possession wins.

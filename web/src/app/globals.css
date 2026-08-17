@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Hashmark design system — light only, by choice.
+   Gridiron Analytics design system — light only, by choice.
    Dense data-terminal surfaces: hairline rules, tabular figures,
    condensed labels. No shadows-as-decoration, no gradients.
    ============================================================ */
 
 :root {
-  /* ground & surfaces — cool grays biased toward the navy accent */
-  --ground: #eff2f6;
+  /* Ground & surfaces.
+     Warm neutrals, not the cool blue-grays this started with. A cold gray
+     ground under a navy masthead is the default palette of every admin
+     template ever generated, and it made considered work look automatic.
+     Warm paper under a cool navy is the pairing financial print has used for
+     a century: the two are far enough apart that the brand colour reads as a
+     deliberate choice rather than a tint of the background. */
+  --ground: #f3f1ed;
   --panel: #ffffff;
-  --panel-2: #f6f8fa;
-  --panel-3: #e9eef4;
+  --panel-2: #faf8f5;
+  --panel-3: #ebe7e1;
 
   /* rules */
-  --rule: #dde3eb;
-  --rule-strong: #c3cedb;
+  --rule: #e3ded7;
+  --rule-strong: #c9c2b8;
 
-  /* ink */
-  --ink: #0c1725;
-  --ink-2: #43556c;
-  --ink-3: #78889d;
+  /* ink — warm near-black, so text sits on the paper rather than over it */
+  --ink: #16181b;
+  --ink-2: #4a4f57;
+  --ink-3: #8a8d93;
 
   /* brand */
   --navy: #0d2340;
@@ -114,17 +120,27 @@ body {
     text-wrap: balance;
   }
 
+  /* `body` sets Inter's character variants (cv05, cv08, ss03), and
+     font-feature-settings inherits — so those tags were being applied to IBM
+     Plex Mono too, where the same names mean different things and ss03 turns
+     on its dotted zero. Figures opt out of the inherited set entirely. */
   .num {
     font-family: var(--font-data), monospace;
+    font-feature-settings: normal;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
 
   /* ---------- surfaces ---------- */
+  /* A panel is a sheet of paper on the desk, not a card in a grid. The border
+     is nearly invisible and the lift comes from the surface change plus one
+     hairline under the header. Boxes drawn in hard 1px rules, repeated forty
+     times down a page, are the strongest single tell of generated layout. */
   .panel {
     background: var(--panel);
     border: 1px solid var(--rule);
-    border-radius: 3px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgb(22 24 27 / 0.04);
   }
 
   .panel-head {
@@ -145,19 +161,70 @@ body {
     color: var(--ink);
   }
 
-  /* section rule: title, then a hairline running to the edge */
-  .section-rule {
+  /* A page title sits above the section rules, not among them. The hairline
+     under it (or under its deck, when it has one) is the only heavy rule on
+     the page, which is what makes the masthead read as a masthead. */
+  .page-head {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule-strong);
   }
 
-  .section-rule::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--rule);
+  .page-head:has(+ .deck) {
+    margin-bottom: 9px;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  /* The masthead rule has to run the full width of the page — a hairline that
+     stops where the sentence stops reads as a rendering fault. So the deck is
+     full width and the measure is held to 76ch with padding instead. */
+  .page-head + .deck {
+    font-size: 13.5px;
+    max-width: none;
+    padding-right: max(0px, calc(100% - 76ch));
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  /* A section title, and under it the qualifier that applies to the table.
+     The rule that used to run from the title to the edge of the column put a
+     hairline across the page every time a section started, and stranded the
+     qualifier out at the right margin — far from the heading it modifies and
+     close enough to the next column's heading to look like it belonged there.
+     The heading now stands on its own and the qualifier sits under it. */
+  .section-rule {
+    margin-bottom: 12px;
+  }
+
+  .section-rule > h2 {
+    font-size: 20px;
+    font-weight: 640;
+    letter-spacing: -0.021em;
+  }
+
+  .section-note {
+    margin: 2px 0 0;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--ink-3);
+  }
+
+  /* The qualifier that applies to a table, set under it.
+     A caption above the data is read before the reader knows what it
+     qualifies, so it lands as another line of preamble; the same sentence
+     under the table reads as a footnote, which is what it is. */
+  .footnote {
+    margin: 7px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--ink-3);
   }
 
   /* ---------- tables ---------- */
@@ -189,6 +256,54 @@ body {
     white-space: nowrap;
   }
 
+  /* Sortable headers. The caret is drawn on every sortable column but kept
+     invisible until hover, so a table at rest still reads as a table rather
+     than as a row of controls; only the column actually in use holds its
+     marker. Columns with nothing to sort — a bar, a logo — never get one. */
+  .grid-table th[data-sortable] {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .grid-table th[data-sortable]:hover {
+    color: var(--ink);
+  }
+
+  .grid-table th[data-sortable]::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 5px;
+    vertical-align: middle;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 4px solid currentColor;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+
+  .grid-table th[data-sortable]:hover::after {
+    opacity: 0.4;
+  }
+
+  .grid-table th[aria-sort="descending"] {
+    color: var(--ink);
+  }
+
+  .grid-table th[aria-sort="descending"]::after {
+    opacity: 0.85;
+  }
+
+  .grid-table th[aria-sort="ascending"] {
+    color: var(--ink);
+  }
+
+  .grid-table th[aria-sort="ascending"]::after {
+    opacity: 0.85;
+    transform: rotate(180deg);
+  }
+
   .grid-table th:first-child,
   .grid-table td:first-child {
     text-align: left;
@@ -215,8 +330,12 @@ body {
   }
 
   /* ---------- bits ---------- */
+  /* Sat on the text baseline, which left the font's descender as dead space
+     under it and made any row carrying a chip ~6px taller than one without —
+     enough that two tables of the same length ended at different heights. */
   .rank-chip {
     display: inline-block;
+    vertical-align: middle;
     min-width: 22px;
     padding: 1px 4px;
     border-radius: 2px;
