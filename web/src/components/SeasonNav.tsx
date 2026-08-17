@@ -18,6 +18,7 @@ export function SeasonNav({
   active,
   href,
   label = "Season",
+  inline = false,
 }: {
   seasons: number[];
   active: number;
@@ -30,10 +31,12 @@ export function SeasonNav({
    */
   recent?: number;
   label?: string;
+  /** Drops the picker's own bottom margin when it shares a row with other controls. */
+  inline?: boolean;
 }) {
   const options = [...seasons]
     .sort((a, b) => b - a)
     .map((season) => ({ season, href: href(season) }));
 
-  return <SeasonSelect options={options} active={active} label={label} />;
+  return <SeasonSelect options={options} active={active} label={label} inline={inline} />;
 }

@@ -1,6 +1,7 @@
 import { DuckDBInstance, type DuckDBConnection } from "@duckdb/node-api";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 
 /**
  * DuckDB reads the pipeline's parquet output directly — no database server,
@@ -149,11 +150,33 @@ declare global {
   var __nflxDuck: Promise<DuckDBConnection> | undefined;
 }
 
+/**
+ * Where DuckDB keeps its extensions.
+ *
+ * Reading `https://` parquet needs the httpfs extension, which DuckDB fetches
+ * on first use and writes to `$HOME/.duckdb` by default. On a serverless
+ * runtime everything except the temp directory is read-only, so that write
+ * fails and every data route 500s in milliseconds — while the same code works
+ * locally and in the build container, both of which have a writable home.
+ *
+ * `os.tmpdir()` is `/tmp` there and the system temp directory here, so one
+ * setting covers both and there is no environment-specific branch to drift.
+ * The path is stable rather than per-boot, so a warm instance downloads once.
+ */
+const EXTENSION_DIR = path.join(os.tmpdir(), "duckdb-extensions");
+
 async function connection(): Promise<DuckDBConnection> {
   if (!globalThis.__nflxDuck) {
     globalThis.__nflxDuck = (async () => {
-      const instance = await DuckDBInstance.create(":memory:", { threads: "4" });
-      return instance.connect();
+      const instance = await DuckDBInstance.create(":memory:", {
+        threads: "4",
+        extension_directory: EXTENSION_DIR,
+      });
+      const conn = await instance.connect();
+      // Load it up front rather than leaning on autoload, so a failure to fetch
+      // the extension surfaces here instead of inside an unrelated query.
+      if (REMOTE) await conn.run("INSTALL httpfs; LOAD httpfs;");
+      return conn;
     })();
   }
   return globalThis.__nflxDuck;

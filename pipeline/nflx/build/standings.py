@@ -13,6 +13,19 @@ from ..config import PYTHAG_EXPONENT
 from ..models import tiebreakers as tb
 from ..util import round_cols, step, write_parquet
 
+# nflverse labels a game with the abbreviation the club used that season, and
+# the teams table holds only the 32 current codes. The tiebreaker tree drops
+# any game whose participants it does not recognise, so without this fold every
+# St Louis, San Diego and Oakland game vanished from the 1999–2019 records —
+# taking three divisions down to three clubs and skewing conference record,
+# common games and strength of victory for everyone who played them.
+RELOCATED = {"SD": "LAC", "STL": "LA", "OAK": "LV"}
+
+
+def _berths(season: int) -> int:
+    """Clubs per conference that reach the playoffs. Seven only from 2020."""
+    return 7 if season >= 2020 else 6
+
 
 def _team_rows(games: pl.DataFrame) -> pl.DataFrame:
     """One row per team per played game, from each team's own perspective."""
@@ -98,15 +111,23 @@ def build(games: pl.DataFrame, teams: pl.DataFrame, team_season: pl.DataFrame) -
             .alias("streak"),
         ).drop("_results")
 
+        # Joined on the franchise, not the abbreviation: a 1999 St Louis row
+        # keeps its own code but takes the Rams' conference and division, so it
+        # stands in the NFC West table it actually played in rather than
+        # dropping out of the standings with a null division.
+        franchise = pl.col("team").replace(RELOCATED)
+        meta = teams.select("team", "conf", "division", "name", "nick")
         agg = agg.join(
-            teams.select("team", "conf", "division", "name", "nick"), on="team", how="left"
+            meta.rename({"team": "_franchise"}),
+            left_on=franchise, right_on="_franchise", how="left",
         )
 
         # Conference record needs the opponent's conference.
         conf_map = teams.select("team", "conf")
         conf_rows = (
-            rows.join(conf_map, on="team", how="left")
-            .join(conf_map.rename({"team": "opp", "conf": "opp_conf"}), on="opp", how="left")
+            rows.with_columns(franchise.alias("_fr"), pl.col("opp").replace(RELOCATED).alias("_fo"))
+            .join(conf_map.rename({"team": "_fr"}), on="_fr", how="left")
+            .join(conf_map.rename({"team": "_fo", "conf": "opp_conf"}), on="_fo", how="left")
             .filter(pl.col("conf") == pl.col("opp_conf"))
             .group_by(["season", "team"])
             .agg(
@@ -141,25 +162,35 @@ def build(games: pl.DataFrame, teams: pl.DataFrame, team_season: pl.DataFrame) -
             )
             if reg.height == 0:
                 continue
-            records = tb.build_records(
-                reg.select("home_team", "away_team", "home_score", "away_score").to_dicts(),
-                team_meta,
+            played = reg.select(
+                pl.col("home_team").replace(RELOCATED),
+                pl.col("away_team").replace(RELOCATED),
+                "home_score", "away_score",
             )
+            # Seeds come back under the current code; the standings rows carry
+            # the code the club used that season, so they are mapped back.
+            era_code = {
+                RELOCATED[code]: code
+                for code in set(reg["home_team"]) | set(reg["away_team"])
+                if code in RELOCATED
+            }
+            records = tb.build_records(played.to_dicts(), team_meta)
             winners = set(tb.division_winners(records).values())
+            berths = _berths(season)
             division_order: dict[str, int] = {}
             for conf in ("AFC", "NFC"):
                 for rank, team in enumerate(tb.seed_conference(conf, records), start=1):
                     seed_rows.append({
-                        "season": season, "team": team, "seed": rank,
-                        "in_playoffs": rank <= 7,
+                        "season": season, "team": era_code.get(team, team), "seed": rank,
+                        "in_playoffs": rank <= berths,
                         "division_winner": team in winners,
                     })
             # Place within division follows the same ordering.
             for division in {v[1] for v in team_meta.values()}:
                 members = [t for t, m in team_meta.items() if m[1] == division]
-                ordered = tb.order_tied(members, records, True) if len(members) > 1 else members
+                ordered = tb.order_division(members, records) if len(members) > 1 else members
                 for place, team in enumerate(ordered, start=1):
-                    division_order[team] = place
+                    division_order[era_code.get(team, team)] = place
             for row in seed_rows:
                 if row["season"] == season:
                     row["div_place"] = division_order.get(row["team"], 9)

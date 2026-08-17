@@ -48,7 +48,7 @@ def build(seasons: list[int], games: pl.DataFrame, teams_df: pl.DataFrame,
                     seed_rows.append({
                         "season": season, "conf": conf, "team": team, "seed": rank,
                         "division_winner": team in winners,
-                        "in_playoffs": rank <= 7,
+                        "in_playoffs": rank <= (7 if season >= 2020 else 6),
                     })
         seeds = pl.DataFrame(seed_rows)
         write_parquet(seeds, "playoff_seeds")

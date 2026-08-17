@@ -240,6 +240,26 @@ def order_tied(group: list[str], records: dict[str, TeamSeason], division: bool)
     return ordered
 
 
+def order_division(members: list[str], records: dict[str, TeamSeason]) -> list[str]:
+    """Standings order within a division: record first, ladder only among equals.
+
+    `order_tied` assumes it is handed clubs that are already level — its first
+    comparison is head to head, not win percentage. Handing it a whole division
+    therefore ordered four clubs on who beat whom, which put an 11-6 Chicago
+    below three nine-win clubs it had split with. The ladder is a tiebreaker,
+    so it only ever runs on a group that is actually tied.
+    """
+    ordered: list[str] = []
+    remaining = list(members)
+    while remaining:
+        best_pct = max(records[t].pct for t in remaining)
+        tied = [t for t in remaining if records[t].pct == best_pct]
+        ordered.extend(tied if len(tied) == 1 else order_tied(tied, records, True))
+        for team in tied:
+            remaining.remove(team)
+    return ordered
+
+
 # --------------------------------------------------------------- seeding
 
 def division_winners(records: dict[str, TeamSeason]) -> dict[str, str]:

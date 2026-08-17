@@ -14,15 +14,18 @@ export function SeasonSelect({
   options,
   active,
   label,
+  inline = false,
 }: {
   options: { season: number; href: string }[];
   active: number;
   label: string;
+  /** Set when the picker shares a row with other controls, which own the gap. */
+  inline?: boolean;
 }) {
   const router = useRouter();
 
   return (
-    <div className="flex gap-2 items-center mb-4">
+    <div className={`flex gap-2 items-center ${inline ? "" : "mb-4"}`}>
       <label htmlFor="season-select" className="label shrink-0">
         {label}
       </label>
@@ -36,7 +39,7 @@ export function SeasonSelect({
         /* Fixed width on purpose: globals.css sets `.flex > * { min-width: 0 }`,
            which beats Tailwind's min-w-* utilities, so a select left to size
            itself collapses to nothing inside a flex row. */
-        className="num w-[88px] shrink-0 px-2 py-1 text-[12px] rounded-[3px]
+        className="num w-[88px] h-[30px] shrink-0 px-2 text-[12px] rounded-[3px]
                    border border-rule bg-panel text-ink cursor-pointer
                    hover:border-rule-strong transition-colors"
       >

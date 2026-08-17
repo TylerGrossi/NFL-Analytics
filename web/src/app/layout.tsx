@@ -5,7 +5,6 @@ import { Brand, BrandMark } from "@/components/Brand";
 import { MainNav, MobileNav } from "@/components/MainNav";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SortableTables } from "@/components/SortableTables";
-import { getManifest } from "@/lib/queries";
 import { SITE } from "@/lib/site";
 
 // One typeface, carrying hierarchy through weight and size rather than through
@@ -45,25 +44,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  let manifest = null;
-  try {
-    manifest = await getManifest();
-  } catch {
-    // Pipeline hasn't run yet — pages render their own empty states.
-  }
-
-  const built = manifest
-    ? new Date(manifest.generated_at).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : null;
-
-  const coverage = manifest?.coverage;
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen flex flex-col">
@@ -109,37 +90,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               Pro Football Reference; contracts from Over The Cap; live game state from ESPN.
               Team logos and player headshots are property of their respective clubs and the NFL.
             </p>
-
-            {/* Coverage and build time as one line rather than a labelled table
-                floated off to the right. The figures are the reason this is
-                here — a reader checking freshness wants to read them, not to
-                match five captions against five values across a gap. */}
-            {manifest && (
-              <p className="text-[11.5px] text-ink-3 m-0 mt-3.5 pt-3 border-t border-rule">
-                <span className="num text-ink-2">
-                  {manifest.seasons[0]}–{manifest.seasons[manifest.seasons.length - 1]}
-                </span>
-                {coverage && (
-                  <>
-                    {" · "}
-                    <span className="num text-ink-2">
-                      {coverage.plays.toLocaleString("en-US")}
-                    </span>{" "}
-                    plays{" · "}
-                    <span className="num text-ink-2">
-                      {coverage.games.toLocaleString("en-US")}
-                    </span>{" "}
-                    games{" · "}
-                    <span className="num text-ink-2">
-                      {coverage.players.toLocaleString("en-US")}
-                    </span>{" "}
-                    players
-                  </>
-                )}
-                {" · built "}
-                <span className="num text-ink-2">{built}</span>
-              </p>
-            )}
           </div>
         </footer>
       </body>

@@ -143,11 +143,10 @@ export default async function HomePage() {
               </table>
             </div>
           </Panel>
-          <Footnote>Opponent-adjusted EPA per play.</Footnote>
         </div>
 
         <div>
-          <SectionRule>Quarterback value</SectionRule>
+          <SectionRule aside="Min 150 DB">Quarterback value</SectionRule>
           <Panel>
             <div className="scroll-x">
               <table className="grid-table">
@@ -181,7 +180,6 @@ export default async function HomePage() {
               </table>
             </div>
           </Panel>
-          <Footnote>Minimum 150 dropbacks.</Footnote>
         </div>
       </div>
 
