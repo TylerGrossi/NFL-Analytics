@@ -9,10 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "cf:sync": "node scripts/sync-r2.mjs",
-    "cf:cors": "wrangler r2 bucket cors set hashmark-parquet --file scripts/r2-cors.json",
+    "cf:cors": "wrangler r2 bucket cors set gridiron-parquet --file scripts/r2-cors.json",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy",
-    "cf:typegen": "wrangler types"
+    "cf:typegen": "wrangler types worker/worker-configuration.d.ts"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",

@@ -2,9 +2,10 @@
 /**
  * Push the built parquet store to R2.
  *
- * DuckDB-WASM in the browser range-reads these files directly over R2's public
- * custom domain, so the Worker is never in the data path — which is what keeps
- * the interactive surfaces (/lab, /stats, every season switch) free to run.
+ * DuckDB-WASM in the browser range-reads these files to power the interactive
+ * surfaces (/lab, /stats, every season switch). By default it reaches them
+ * same-origin through the Worker's /data/* route, which needs no domain and no
+ * CORS; point PARQUET_BASE at an R2 custom domain to bypass the Worker instead.
  *
  *   node scripts/sync-r2.mjs                  # sync everything that changed
  *   node scripts/sync-r2.mjs --bucket X       # override the target bucket
@@ -31,7 +32,7 @@ const value = (name, fallback) => {
   return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
 };
 
-const BUCKET = value("bucket", process.env.R2_BUCKET ?? "hashmark-parquet");
+const BUCKET = value("bucket", process.env.R2_BUCKET ?? "gridiron-parquet");
 const DATA_DIR = path.resolve(
   value("data", process.env.NFLX_DATA_DIR ?? path.join(process.cwd(), "..", "data"))
 );
@@ -188,7 +189,7 @@ async function main() {
   // The manifest goes up last, so an interrupted sync re-uploads rather than
   // claiming files landed that did not.
   if (!DRY) {
-    const tmp = path.join(os.tmpdir(), `hashmark-manifest-${process.pid}.json`);
+    const tmp = path.join(os.tmpdir(), `gridiron-manifest-${process.pid}.json`);
     await fs.writeFile(tmp, JSON.stringify(manifest));
     await put(tmp, "_manifest.json", ["--content-type", "application/json"]);
     await fs.unlink(tmp);

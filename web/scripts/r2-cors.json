@@ -1,10 +1,11 @@
 [
   {
+    "//": "Only needed if PARQUET_BASE points at an R2 custom domain. The default setup serves parquet same-origin through the Worker's /data/* route, where CORS does not apply at all. Update the origins to the real site before applying this.",
     "AllowedOrigins": [
-      "https://hashmark.dev",
-      "https://www.hashmark.dev",
+      "https://gridiron-analytics.workers.dev",
       "http://localhost:3000",
-      "http://localhost:8788"
+      "http://localhost:3111",
+      "http://localhost:8787"
     ],
     "AllowedMethods": ["GET", "HEAD"],
     "AllowedHeaders": ["range", "if-match", "if-none-match"],

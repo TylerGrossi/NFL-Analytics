@@ -1,20 +1,26 @@
 # Working agreements
 
-## Never push to git
+## Never push unless told to, in that message
 
-**Do not run `git push`, ever.** Not with `--force`, not to a new branch, not
-"just to back things up". The remote is `github.com/TylerGrossi/NFL-Analytics`
-and it is public — anything pushed is published.
+`git push` is allowed **only when the user asks for it in the request you are
+answering.** Never on your own initiative, never as a tidy-up at the end of a
+task, and never because it seems implied. The remote is
+`github.com/TylerGrossi/NFL-Analytics` and it is public — anything pushed is
+published, and unpublishing is not really possible.
 
-Also never:
+Permission does not carry forward. "Push this" means push this, once. The next
+task starts from no again.
+
+Never, with or without being asked:
 
 - add, change or remove a git remote
-- create or delete a branch on the remote
+- force-push, or use `--force` on anything
+- rewrite published history (`rebase`, `reset --hard`, amend of a pushed commit)
 - open, merge or close a pull request
-- run anything with `--force`
 
-Committing locally is fine **when asked**. Pushing is always the user's own
-action, taken deliberately from their editor.
+Committing locally is fine when asked. Before any push, check what is staged —
+the working tree may hold the user's own in-flight work, which is theirs to
+commit, not yours to sweep up.
 
 ## Verify before you claim
 

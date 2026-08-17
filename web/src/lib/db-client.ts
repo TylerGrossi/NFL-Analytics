@@ -34,9 +34,10 @@ async function parquetBase(): Promise<string> {
       } catch {
         // fall through
       }
-      // Local `next dev` with no Worker in front: the pipeline's output is
-      // served from public/ by the dev server.
-      return "";
+      // The Worker serves the store same-origin from R2 at /data/*, so this is
+      // the right answer whenever /api/config is unreachable — including under
+      // plain `next dev`, where a dev-only route can stand in for it.
+      return "/data";
     })();
     base = await basePromise;
   }

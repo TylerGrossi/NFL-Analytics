@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "hashmark",
+  "name": "gridiron-analytics",
   // Deliberately outside src/ — Next's tsconfig globs `**/*.ts` under the app,
   // and the Worker's Cloudflare globals are not in scope there.
   "main": "worker/index.ts",
@@ -17,37 +17,38 @@
     // Only these paths wake the Worker. Everything else — every prerendered
     // page, every chunk — is served directly, which keeps us inside the free
     // tier's 100k daily Worker invocations.
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/data/*"]
   },
 
   "observability": { "enabled": true },
 
   "vars": {
-    // Public base for the parquet store. Overridden per environment below.
-    // DuckDB-WASM range-reads these directly from R2's CDN, so the Worker is
-    // not in the path for data.
-    "PARQUET_BASE": "https://data.hashmark.dev"
+    // Where the browser fetches parquet from.
+    //
+    // The default is a same-origin path served by the Worker out of the R2
+    // binding, which means the site needs no custom domain and no CORS config.
+    // Once a domain exists, point this at an R2 custom domain instead — the
+    // browser then reads from R2's CDN directly, the /data/* route stops being
+    // hit, and Worker invocations drop to just the live ESPN calls.
+    "PARQUET_BASE": "/data"
   },
 
-  // The bucket is bound for the sync/verify script and for any future
-  // server-side read. Browser reads go over the public custom domain instead,
-  // so they cost no Worker invocations.
   "r2_buckets": [
     {
       "binding": "PARQUET",
-      "bucket_name": "hashmark-parquet"
+      "bucket_name": "gridiron-parquet"
     }
   ],
 
   "env": {
     "preview": {
       "vars": {
-        "PARQUET_BASE": "https://data-preview.hashmark.dev"
+        "PARQUET_BASE": "/data"
       },
       "r2_buckets": [
         {
           "binding": "PARQUET",
-          "bucket_name": "hashmark-parquet-preview"
+          "bucket_name": "gridiron-parquet-preview"
         }
       ]
     }
