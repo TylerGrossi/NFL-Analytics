@@ -2,7 +2,8 @@
 
 *Compiled 2026-08-16. Written for an agent picking this up cold.*
 
-Read `README.md` for what exists and `HANDOFF.md` for what changed most recently.
+Read `README.md` for what exists, `docs/` for how it works, and `HANDOFF.md` for what
+changed most recently.
 `BLUEPRINT.md` is the original research; this file is the **second** research pass,
 done after the build reached ~20 routes, and it deliberately does not repeat it.
 
@@ -344,7 +345,7 @@ a weekly return visit for seventeen weeks.
 previews. Take the next step: when a starter is listed out, what does the projected
 margin move by, given the PAR gap to the next man up? This closes the loop between
 the depth chart, PAR and `game_previews`, and it addresses a known gap
-(`README.md`: "simulated seasons hold team ratings fixed").
+(`docs/data.md`: "simulated seasons hold team ratings fixed").
 
 **Gap: large.** **Effort: M–L.**
 

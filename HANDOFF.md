@@ -1,7 +1,8 @@
 # Handoff — WAR rebuild, design pass, injury model, in-season fantasy
 
 Context for an agent picking this up cold. Covers the most recent block of work.
-`README.md` has the full project documentation; this is what changed and why.
+`README.md` is the front door and `docs/` holds the methodology; this is what
+changed most recently and why.
 
 Sections 1–3 are the earlier WAR / design / injury work. Sections 4–6 are the
 2026-08-15 pass that cleared four of the five queued items and found two silent
@@ -189,7 +190,8 @@ user can supply.
    repeats year to year at 0.615 against our 0.686. The decisive number is that
    their running back PAR correlates **0.923 with touches** and ours −0.178 —
    it is a volume statistic. A median baseline also puts 65% of qualified
-   quarterbacks "below replacement". Full comparison table is in `README.md`.
+   quarterbacks "below replacement". Full comparison table is in
+   `docs/methodology.md`.
    **What was adopted is the presentation**: a within-position percentile on the
    season leaderboard, because our own known limitation is that a back's best
    season is 0.13 wins and looks like noise without one.
