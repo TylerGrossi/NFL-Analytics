@@ -65,7 +65,25 @@ General → Workflow permissions → Read and write permissions.** Without it th
 The Next app is not at the repo root. **Root Directory must be `web`**, set in
 the Vercel project settings — `vercel.json` cannot express it.
 
-### 3. Set the environment variable
+### 3. Function size and duration
+
+`web/vercel.json` sets `maxDuration: 60` for `src/app/**`. Pages query parquet
+over HTTPS rather than from local disk, so a cold request pays real network time
+— measured ~0.5s for a first read against a remote file, ~30ms once httpfs has
+the footer cached. Several routes fire multiple queries. The default 10s is too
+tight a margin for a cold instance on a slow route; 60s is the Hobby ceiling and
+costs nothing unless actually used.
+
+**Memory is set in the dashboard, not here.** DuckDB is columnar and buffers row
+groups in memory, and 1769 MB is the point on Vercel's scale where vCPU
+allocation stops being the limit for aggregate scans — but with Fluid compute
+enabled `memory` is rejected in `vercel.json`, so it lives in **Settings →
+Functions** instead.
+
+`vercel.json` is parsed as strict JSON. It cannot hold comments, which is why
+this reasoning is here rather than beside the values.
+
+### 4. Set the environment variable
 
 `NFLX_DATA_URL` = `https://github.com/<owner>/<repo>/releases/download/data-latest`
 

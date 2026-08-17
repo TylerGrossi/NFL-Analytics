@@ -40,7 +40,10 @@ const TAG = value("tag", process.env.NFLX_DATA_TAG ?? "data-latest");
 const DATA_DIR = path.resolve(value("data", process.env.NFLX_DATA_DIR ?? "data"));
 const DRY = flag("dry-run");
 
-const GH = process.platform === "win32" ? "gh.cmd" : "gh";
+// Plain "gh" on every platform. On Windows the CLI installs as gh.exe, which
+// spawn resolves through PATHEXT; naming gh.cmd instead fails with EINVAL,
+// because Node refuses to execFile a .cmd without shell: true.
+const GH = "gh";
 
 /**
  * Release assets are a flat namespace — there are no directories. The store on

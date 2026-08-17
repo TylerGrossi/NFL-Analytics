@@ -1,22 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
   "framework": "nextjs",
-
   "functions": {
     "src/app/**": {
-      // Pages query parquet over HTTPS rather than from local disk, so a cold
-      // request pays real network time — measured ~0.5s for a first read against
-      // a remote file, ~30ms once httpfs has the footer cached. Several routes
-      // fire multiple queries. The default 10s is too tight a margin for a cold
-      // instance on a slow route; 60s is the Hobby ceiling and costs nothing
-      // unless actually used.
-      "maxDuration": 60,
-
-      // DuckDB is columnar and buffers row groups in memory. 1769 MB is the
-      // point on Vercel's scale where vCPU allocation stops being the limit for
-      // aggregate scans.
-      "memory": 1769
+      "maxDuration": 60
     }
   }
 }
