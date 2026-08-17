@@ -25,9 +25,9 @@ FANTASY = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons"
 
 # Identify honestly, but without a `name/version` token: ESPN's edge 403s any
 # unrecognised agent carrying one, so "hashmark-analytics/0.1 (…)" was being
-# refused on every endpoint while the same string minus "/0.1" is served.
+# refused on every endpoint while the same string minus a version is served.
 # Verified deterministic — 4/4 refusals with the version, 4/4 responses without.
-HEADERS = {"User-Agent": "hashmark-analytics (personal project)"}
+HEADERS = {"User-Agent": "gridiron-analytics (personal project)"}
 TIMEOUT = 20
 
 

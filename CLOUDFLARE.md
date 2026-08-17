@@ -42,15 +42,35 @@ GitHub Action (nightly 06:30 ET)
 
 Cloudflare
   Workers Assets   prerendered HTML/JS      served direct, no Worker invocation
-  Worker           /api/espn/*              live game state, correct User-Agent
-                   /api/config              tells the browser where R2 is
-  R2               parquet + duckdb-*.wasm  public custom domain, CORS, Range
+  Worker           /api/espn/*              live game state
+                   /data/*                  parquet + wasm, out of the R2 binding
+                   /api/config              tells the browser where the store is
+  R2               parquet + duckdb-*.wasm
   Browser          DuckDB-WASM              /lab, /stats, season switching
 ```
 
-**Cost: $0/month.** Free tier covers 20,000 assets, 100k Worker requests/day, and
-10 GB R2. R2 charges no egress, which is what makes serving 154 MB of parquet to
-browsers viable.
+**Cost: $0/month, and no domain required.** Free tier covers 20,000 assets, 100k
+Worker requests/day, and 10 GB R2. R2 charges no egress, which is what makes
+serving 154 MB of parquet to browsers viable.
+
+### Serving the data without a domain
+
+`PARQUET_BASE` defaults to `/data` — a same-origin path the Worker serves out of
+the R2 binding. That choice is what removes the domain requirement:
+
+- R2's public `r2.dev` URL is rate-limited and explicitly not for production.
+- An R2 custom domain is the right long-term answer but needs a domain.
+- The binding needs neither, and being same-origin means **there is no CORS to
+  configure at all** — removing a class of failure that only shows up in the
+  browser, at runtime, with an unhelpful message.
+
+The cost is Worker invocations: DuckDB-WASM issues a HEAD plus several ranged
+GETs per query against a 100k/day budget. Comfortable to launch on.
+
+**When a domain arrives**, add it as an R2 custom domain, apply
+`scripts/r2-cors.json` with the real origin, and set `PARQUET_BASE` to it. The
+browser then reads R2's CDN directly, `/data/*` stops being hit, and Worker
+invocations fall back to just the live ESPN calls. No code change.
 
 ### Two limits that dictate the design
 
@@ -86,9 +106,25 @@ today — the Cloudflare layer is additive until `output: "export"` is switched 
 ### Why the ESPN call is proxied rather than made from the browser
 
 1. ESPN sends no CORS headers, so a direct fetch from the page is blocked.
-2. Their edge 403s an unrecognised User-Agent carrying a `name/version` token,
-   and browsers will not let script set User-Agent. This caused a silent,
-   total outage of every live surface once already — `HANDOFF.md` §5.
+2. Their edge fingerprints clients and 403s some of them, and browsers will not
+   let script set request headers like User-Agent. This caused a silent, total
+   outage of every live surface once already — `HANDOFF.md` §5.
+
+**Correction to `HANDOFF.md` §5, measured 2026-08-16.** That entry attributes the
+403 to a User-Agent carrying a `name/version` token. The real rule is lower down
+the stack. Identical requests to `/scoreboard` from this machine:
+
+| Client | Result |
+|---|---|
+| Node `fetch`, every User-Agent tried (incl. `name/version`) | 200 |
+| curl, its own default UA | 200 |
+| curl, every other UA — custom, browser-like, or absent | 403 |
+
+So the discriminator is TLS fingerprint or header ordering, not the UA string.
+The practical consequences: the app is fine (it runs on Node), **curl is useless
+for testing this endpoint**, and workerd is a third client whose behaviour
+neither result predicts. **Verify the live path against the deployed Worker**;
+if live surfaces go quiet after deploy, this is the first thing to check.
 
 The proxy uses a closed whitelist (`scoreboard`, `summary`, `standings`, `teams`,
 `news`) and forwards only known query params. An open proxy would let anyone run
@@ -159,6 +195,21 @@ bitten by twice (`HANDOFF.md` §5).
   directory listing, so DuckDB-WASM cannot glob `pbp/*.parquet`. Any query relying
   on the glob must name its seasons explicitly.
 
+### 4.2b The four API routes
+
+`output: "export"` emits no server, so every Next route handler stops existing.
+All four need a home:
+
+| Route | Used by | Where it goes |
+|---|---|---|
+| `src/app/api/live/[id]` | `LiveGame.tsx` polling | The Worker's `/api/espn/summary?event=` — already built |
+| `src/app/api/search` | `PlayerSearch.tsx` | Prebuilt static player index + client-side filter (Fuse.js), as `BLUEPRINT.md` §6 planned |
+| `src/app/api/stats/export` | `/stats` CSV export | Client-side: DuckDB-WASM `COPY … TO`, or serialise the already-loaded rows |
+| `src/app/api/fourth-down` | `FourthDownCalculator.tsx` | Client-side against `fourth_down_grid.parquet` in R2 |
+
+The fourth-down grid is 4.6 MB and precomputed, so a ranged read of the relevant
+partition is cheap — this is a good first exercise of the WASM path.
+
 ### 4.3 Account provisioning — needs an interactive login
 
 `wrangler login` is an OAuth flow and could not run in the session that built this.
@@ -167,23 +218,22 @@ Nothing below has been executed against a real account. Run in `web/`:
 ```bash
 npx wrangler login
 
-# Buckets. The preview one is optional but keeps experiments off production data.
-npx wrangler r2 bucket create hashmark-parquet
-npx wrangler r2 bucket create hashmark-parquet-preview
-
-# CORS — without this DuckDB-WASM's range requests are blocked by the browser.
-npm run cf:cors
-
-# Public access. A custom domain is strongly preferred over the r2.dev URL,
-# which is rate-limited and explicitly not for production.
-npx wrangler r2 bucket domain add hashmark-parquet --domain data.hashmark.dev
+# One bucket is enough to start. The preview one keeps experiments off
+# production data and can wait.
+npx wrangler r2 bucket create gridiron-parquet
 
 # First data push (~231 MB; subsequent syncs only move what changed).
 npm run cf:sync
-
-# Deploy.
-npm run cf:deploy
 ```
+
+That is the whole prerequisite. **No bucket CORS, no public bucket access and no
+domain** — the Worker serves the store same-origin from the binding, so none of
+those apply. `npm run cf:cors` and `wrangler r2 bucket domain add` are only for
+the later custom-domain setup described in §2.
+
+The site lands on `gridiron-analytics.<account>.workers.dev`, which is free,
+HTTPS, and permanent. A custom domain can be pointed at it any time afterwards
+without redeploying.
 
 Then set, in the repo's Actions settings:
 
@@ -191,25 +241,26 @@ Then set, in the repo's Actions settings:
 |---|---|---|
 | Secret | `CLOUDFLARE_API_TOKEN` | Token with *Workers Scripts: Edit* and *Workers R2 Storage: Edit* |
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | From the Cloudflare dashboard |
-| Variable | `PARQUET_BASE` | `https://data.hashmark.dev` |
+| Variable | `PARQUET_BASE` | Leave unset while using `/data`; set it only when a custom domain exists |
 
-**Domains referenced in config are placeholders.** `wrangler.jsonc`,
-`scripts/r2-cors.json` and the commands above all assume `hashmark.dev` /
-`data.hashmark.dev`. Change them together — a mismatch between the CORS origin
-list and the real site origin fails only in the browser, at runtime, with a
-message that does not obviously point at CORS.
+**The origins in `scripts/r2-cors.json` are placeholders** and only matter under
+the custom-domain setup. If you switch to it, change the CORS origin list and
+`PARQUET_BASE` together — a mismatch fails only in the browser, at runtime, with
+a message that does not obviously point at CORS.
 
 ### 4.4 Order to do it in
 
-1. Provision the account and run `cf:sync` + `cf:deploy` **before** the refactor,
-   with the site still in server mode. The Worker and assets deploy fine; this
-   proves credentials, bucket, CORS and custom domain in isolation.
-2. Convert `/lab` and `/stats` to client-side. They are the least SEO-sensitive
-   and they exercise the whole WASM path end to end.
-3. Convert `/games/[id]` and verify the ESPN proxy against a live game window.
-4. Then the 16 searchParams routes, in traffic order.
+1. Provision (`wrangler login`, bucket, `cf:sync`). Proves credentials and gets
+   the data layer live. Independent of everything else.
+2. Convert `/lab` and `/stats` to client-side, and the fourth-down calculator off
+   its API route. Least SEO-sensitive, and they exercise the whole WASM path.
+3. Convert `/games/[id]` and `/api/live` onto the Worker's ESPN proxy.
+4. Then the 16 searchParams routes, in traffic order, plus `/api/search` and
+   `/api/stats/export`.
 5. Switch `output: "export"` on last, once nothing depends on request-time
-   rendering. Turning it on earlier just produces confusing build failures.
+   rendering, and deploy. Turning it on earlier just produces confusing build
+   failures — `out/` does not exist until then, so `wrangler deploy` cannot run
+   before this point either.
 
 ---
 

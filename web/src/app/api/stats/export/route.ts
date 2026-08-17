@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="hashmark-${mode}-${group.key}-${season}.csv"`,
+      "Content-Disposition": `attachment; filename="gridiron-${mode}-${group.key}-${season}.csv"`,
     },
   });
 }

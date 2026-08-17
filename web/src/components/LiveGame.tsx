@@ -215,7 +215,7 @@ export function LiveGame({
             </div>
           </div>
           <div className="px-4 py-2 border-t border-rule bg-panel-2 flex items-center justify-between text-[11px] text-ink-3">
-            <span>Hashmark model · refreshed every {POLL_MS / 1000}s</span>
+            <span>Gridiron model · refreshed every {POLL_MS / 1000}s</span>
             <span className="num">
               {updatedAt
                 ? updatedAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" })

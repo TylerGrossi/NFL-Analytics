@@ -11,15 +11,27 @@ import "server-only";
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
 
 /**
- * Identify honestly, but without a `name/version` token.
+ * Identify honestly, without a `name/version` token.
  *
- * ESPN's edge 403s an unrecognised agent that carries one, so
- * "hashmark-analytics/0.1" was refused on every endpoint while the same string
- * minus the version is served. Verified deterministic. Exported because
- * `live.ts` calls the same API directly and drifted out of sync once already —
- * every ESPN request in the app must use this constant.
+ * The version-less shape is kept because it is what has been running and is
+ * known good — but note the stated reason for it was wrong. Re-measured
+ * 2026-08-16: from Node's `fetch`, /scoreboard returns 200 for *every*
+ * User-Agent tried, `name/version` included. From curl it returns 403 for every
+ * UA except curl's own. So ESPN is fingerprinting below the header — TLS or
+ * header ordering — and the UA string is not the discriminator it was taken for.
+ *
+ * Two practical consequences:
+ *   - **curl cannot test this endpoint.** A 403 from curl says nothing about
+ *     what the app will get. Use Node.
+ *   - workerd is a third client again, so the Worker's proxy behaviour does not
+ *     follow from either result and needs verifying once deployed.
+ *
+ * Exported because `live.ts` calls the same API directly and drifted out of sync
+ * once already — every ESPN request in the app must use this constant. The
+ * Worker (`worker/index.ts`) necessarily repeats the literal: it is a separate
+ * bundle and importing from here would drag in `server-only`.
  */
-export const ESPN_USER_AGENT = "hashmark-analytics (personal project)";
+export const ESPN_USER_AGENT = "gridiron-analytics (personal project)";
 
 export type LiveTeam = {
   abbr: string | null;

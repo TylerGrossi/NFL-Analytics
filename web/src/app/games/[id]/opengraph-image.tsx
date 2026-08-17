@@ -26,10 +26,10 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     return new ImageResponse(
       ogCard({
         eyebrow: "Game",
-        title: "Hashmark",
+        title: "Gridiron Analytics",
         subtitle: "Win probability, drives and every play scored",
         stats: [],
-        footer: `hashmark · ${manifest.stats_season} data`,
+        footer: `${manifest.stats_season} season · nflverse`,
       }),
       size
     );

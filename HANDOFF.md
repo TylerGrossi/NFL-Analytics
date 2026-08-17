@@ -207,7 +207,8 @@ user can supply.
 3. **Film on game pages — done, and the 403 was not a stale event id.** Every
    ESPN call in the project was 403ing: their edge refuses an unrecognised agent
    carrying a `name/version` token, and both `sources/espn.py` and
-   `web/src/lib/espn.ts` sent `hashmark-analytics/0.1`. Dropping `/0.1` fixes it
+   `web/src/lib/espn.ts` sent `hashmark-analytics/0.1` (the site was called
+  Hashmark then). Dropping the version token fixes it
    (4/4 refusals with, 4/4 responses without). This had also killed the entire
    live-game path — `/games/<espn-id>` was 404ing. `Highlights` renders clip
    cards that **link** to ESPN rather than embedding their mp4, and respects the
@@ -288,6 +289,29 @@ Fixed by excluding null-posteam rows from `getGameWinProbability` — they are
 not plays. Worth remembering as a pattern: **a three-way SQL CASE on a nullable
 join key silently sends NULLs down the wrong branch.** The same shape exists
 anywhere else `posteam = home_team` is used.
+
+## 6b. Renamed to Gridiron Analytics, 2026-08-16
+
+Was "Hashmark". `SITE` in `web/src/lib/site.ts` is the source of identity, but
+the rename touched more than that file claimed to — the mark in `public/`, the
+ESPN user-agent in **both** `lib/espn.ts` and `sources/espn.py`, the CSV export
+filename, the chart-export watermark, and two "Hashmark model" captions.
+
+**The user-agent change was tested before shipping.** ESPN 403s unrecognised
+agents that carry a `name/version` token, so any change to that string is a
+live risk; `gridiron-analytics (personal project)` was verified 3/3 before the
+swap.
+
+**Brand assets** live in `web/public/`, generated from the supplied artwork:
+
+- `logo.png` — the full lockup, trimmed and background removed.
+- `mark.png` — the football-and-bars mark, navy on transparent, for light
+  surfaces.
+- `mark-light.png` — a knockout of the same shape. The masthead is navy and the
+  artwork is navy, so the original disappears on it; the knockout renders the
+  ball white with the laces and bar gaps showing the header through. Use the
+  wrong variant on either ground and the mark vanishes.
+- `src/app/icon.png`, `apple-icon.png`, `favicon.ico` — all from the mark.
 
 ## 7. Working notes
 

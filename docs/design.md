@@ -57,7 +57,7 @@ Signature charts also carry a **PNG button** on hover — the win probability ch
 pick value curves and the player weekly chart. The charts are server-rendered SVG, so the export
 clones the node, resolves every CSS custom property to a literal (a serialised SVG has no document,
 so `var(--c1)` renders black), paints the panel background, and draws to a 2× canvas with the
-Hashmark mark and a caption baked in. The team efficiency quadrant is deliberately excluded: it
+Gridiron Analytics mark and a caption baked in. The team efficiency quadrant is deliberately excluded: it
 draws club logos with `<image href>` from a remote host, which taints the canvas.
 
 ## Season navigation

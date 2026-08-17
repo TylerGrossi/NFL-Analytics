@@ -1,4 +1,4 @@
-# Hashmark — NFL analytics
+# Gridiron Analytics
 
 A full-stack NFL analytics site: opponent-adjusted team efficiency, player cards with positional
 percentiles, leaderboards and a play-by-play query layer — all built on free, open data.

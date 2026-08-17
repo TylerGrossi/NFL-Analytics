@@ -175,7 +175,7 @@ export function ogCard({
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ display: "flex", width: 10, height: 22, background: stripe }} />
-          <div style={{ display: "flex", fontWeight: 700, letterSpacing: -0.3 }}>Hashmark</div>
+          <div style={{ display: "flex", fontWeight: 700, letterSpacing: -0.3 }}>Gridiron Analytics</div>
         </div>
         <div style={{ display: "flex", color: "#9fb2ca" }}>{footer}</div>
       </div>

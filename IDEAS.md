@@ -30,7 +30,7 @@ franchise tags, draft), a trade analyzer, a fantasy draft simulator with VORP
 rankings, a playoff machine, a betting analytics section, a 435k-play stats
 database, and — notably — **daily games, puzzles and trivia**.
 
-What they do **not** have, and what Hashmark does:
+What they do **not** have, and what Gridiron Analytics does:
 
 - A real WAR/PAR model with published backtests and a methodology page.
 - Opponent-adjusted efficiency computed from play-by-play rather than box scores.
@@ -39,11 +39,11 @@ What they do **not** have, and what Hashmark does:
   (§6 of `HANDOFF.md`), measured injury play-probability, empirically-derived
   replacement level.
 
-What they have that Hashmark does not, and that matters:
+What they have that Gridiron Analytics does not, and that matters:
 
 - **Simulation and play.** GM mode, mock drafts, puzzles. This is a *retention*
   mechanic, not an analytics one, and it is why they get repeat traffic.
-- **Draft prospect coverage.** Hashmark's `/draft` is retrospective (pick value
+- **Draft prospect coverage.** Gridiron Analytics' `/draft` is retrospective (pick value
   curve, club returns, steals and misses). It has nothing about the *next* class.
 - **A betting section.**
 
@@ -64,7 +64,7 @@ biggest unlock available.
 ### 1.3 Natural-language query became table stakes elsewhere
 
 NLQ over sports data is now a shipped product category (the Statcast NLQ work is the
-clearest analogue). Nobody has done it for NFL play-by-play. Hashmark is unusually
+clearest analogue). Nobody has done it for NFL play-by-play. Gridiron Analytics is unusually
 well positioned because `/lab` already runs **DuckDB over parquet in-process** — the
 only missing piece is text→SQL, and the schema is small enough to fit in a prompt.
 
@@ -83,7 +83,7 @@ of the touchback decision are a season-long story with a natural weekly update.
 
 ## 2. The strategic read
 
-Hashmark's problem is no longer capability. It is that the site is **a set of
+Gridiron Analytics' problem is no longer capability. It is that the site is **a set of
 answers with no reasons to return and no way to travel.**
 
 Three deficits, in priority order:
@@ -135,7 +135,7 @@ Ship:
   renders a real data card rather than a blank rectangle.
 - A "copy image" / "download PNG" button on every signature chart (efficiency
   quadrant, WP chart, drive chart, player percentile bars).
-- A small "Hashmark" mark plus the season and data-freshness stamp baked into the
+- A small "Gridiron Analytics" mark plus the season and data-freshness stamp baked into the
   export, so the image carries attribution wherever it lands.
 
 **Gap: total.** No free NFL analytics site does this well. It is the cheapest growth

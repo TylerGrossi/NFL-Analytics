@@ -109,7 +109,7 @@ export async function CompletedGame({ game }: { game: Game }) {
         <div className="flex flex-col gap-4">
           <Highlights eventId={game.espn} />
 
-          <Panel title="Win probability" meta={`${wp.length} plays · Hashmark model`}>
+          <Panel title="Win probability" meta={`${wp.length} plays · Gridiron model`}>
             {wp.length > 1 ? (
               <div className="pt-3">
                 <ChartExport

@@ -1,8 +1,14 @@
-/** Single source of truth for site identity. Renaming touches this file only. */
+/**
+ * Site identity.
+ *
+ * Not quite the only place a rename touches — the mark lives in `public/`, the
+ * ESPN user-agent in `lib/espn.ts` and `sources/espn.py`, and the CSV export
+ * filename in the stats route. Everything user-facing reads from here.
+ */
 
 export const SITE = {
-  name: "Hashmark",
-  tagline: "NFL analytics",
+  name: "Gridiron Analytics",
+  tagline: "Every snap, measured",
   description:
     "Opponent-adjusted team efficiency, player cards and advanced NFL metrics built on open play-by-play data.",
 } as const;

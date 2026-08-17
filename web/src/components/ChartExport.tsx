@@ -139,11 +139,11 @@ async function exportSvg(live: SVGSVGElement, filename: string, caption?: string
     // Attribution travels with the image, which is the point of exporting it.
     ctx.font = "600 12px system-ui, -apple-system, Segoe UI, sans-serif";
     ctx.fillStyle = ink;
-    ctx.fillText("Hashmark", PAD, ch - 10);
+    ctx.fillText("Gridiron Analytics", PAD, ch - 10);
     if (caption) {
       ctx.font = "11px system-ui, -apple-system, Segoe UI, sans-serif";
       ctx.fillStyle = ink3;
-      const brand = ctx.measureText("Hashmark").width;
+      const brand = ctx.measureText("Gridiron Analytics").width;
       ctx.fillText(`· ${caption}`, PAD + brand + 34, ch - 10);
     }
 
