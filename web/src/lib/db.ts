@@ -165,11 +165,21 @@ declare global {
  */
 const EXTENSION_DIR = path.join(os.tmpdir(), "duckdb-extensions");
 
+/**
+ * DuckDB also resolves a home directory of its own, separately from the
+ * extension path above, and on a serverless runtime `$HOME` is empty — which
+ * fails as `IO Error: Can't find the home directory at ''` before any query
+ * runs. Setting both is what the error itself prescribes; neither one alone is
+ * enough.
+ */
+const HOME_DIR = os.tmpdir();
+
 async function connection(): Promise<DuckDBConnection> {
   if (!globalThis.__nflxDuck) {
     globalThis.__nflxDuck = (async () => {
       const instance = await DuckDBInstance.create(":memory:", {
         threads: "4",
+        home_directory: HOME_DIR,
         extension_directory: EXTENSION_DIR,
       });
       const conn = await instance.connect();
