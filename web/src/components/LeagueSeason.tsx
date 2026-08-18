@@ -76,7 +76,7 @@ export function AllPlayPanel({ rows }: { rows: AllPlay[] }) {
   const played = rows.some((r) => r.weeks > 0);
   if (!played) {
     return (
-      <Panel title="All-play standings" meta="how you would do against everyone">
+      <Panel title="All-play standings">
         <Empty>
           No weeks have been played yet. All-play needs scores, so this fills in once the season
           starts.
@@ -86,7 +86,7 @@ export function AllPlayPanel({ rows }: { rows: AllPlay[] }) {
   }
 
   return (
-    <Panel title="All-play standings" meta="every team against every other, every week">
+    <Panel title="All-play standings">
       <div className="scroll-x">
         <table className="grid-table">
           <thead>
@@ -179,7 +179,6 @@ export function TradeTargetPanel({
   return (
     <Panel
       title="Who would upgrade your lineup"
-      meta="points added to your optimal lineup this week"
     >
       {targets.length === 0 ? (
         <Empty>Nobody in the league would improve this lineup.</Empty>
@@ -246,14 +245,14 @@ export function MovesPanel({
 
   if (moves.length === 0) {
     return (
-      <Panel title="Recent moves" meta="adds, drops and trades">
+      <Panel title="Recent moves">
         <Empty>No completed transactions yet.</Empty>
       </Panel>
     );
   }
 
   return (
-    <Panel title="Recent moves" meta={`${moves.length} most recent`}>
+    <Panel title="Recent moves">
       <div className="scroll-x max-h-[520px] scroll-y">
         <table className="grid-table">
           <thead>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, SectionRule, TeamMark } from "@/components/ui";
+import { Empty, Panel, SectionRule, TeamMark } from "@/components/ui";
 import {
   getManifest,
   getOddsSeasons,
@@ -42,18 +42,15 @@ export default async function PlayoffsPage({
   const [odds, seeds, teams, standings] = await Promise.all([
     getPlayoffOdds(season),
     getPlayoffSeeds(season),
-    getTeamMap(),
+    getTeamMap(season),
     getStandings(season),
   ]);
 
   const complete = seeds.length > 0;
-  const sims = odds[0]?.sims ?? 0;
 
   return (
     <>
-      <SectionRule aside={sims ? `${sims.toLocaleString("en-US")} simulated seasons` : undefined}>
-        Playoff picture
-      </SectionRule>
+      <SectionRule>Playoff picture</SectionRule>
 
       <div className="flex gap-1.5 flex-wrap items-center mb-4">
         <span className="label">Season</span>
@@ -72,18 +69,14 @@ export default async function PlayoffsPage({
         ))}
       </div>
 
-      <Deck>
-        Ten thousand simulated seasons, each seeded through the full NFL tiebreaker tree.
-      </Deck>
-
       {complete && (
         <>
-          <SectionRule aside="head to head, common games, strength of victory">
+          <SectionRule>
             {standings.length ? "Seeding" : "Projected seeding"}
           </SectionRule>
           <div className="grid gap-4 lg:grid-cols-2 mb-2">
             {["AFC", "NFC"].map((conf) => (
-              <Panel key={conf} title={conf} meta="1–4 division winners, 5–7 wild cards">
+              <Panel key={conf} title={conf}>
                 <div className="px-2 py-1">
                   {seeds
                     .filter((s) => s.conf === conf && s.seed <= 7)
@@ -101,11 +94,6 @@ export default async function PlayoffsPage({
                             href={`/teams/${s.team}`}
                             name={teams[s.team]?.nick ?? s.team}
                           />
-                          {s.division_winner && (
-                            <span className="tag" data-tone="accent">
-                              Division
-                            </span>
-                          )}
                           <span className="flex-1" />
                           <span className="num text-[12px] text-ink-2">
                             {row ? `${row.w}-${row.l}${row.t ? `-${row.t}` : ""}` : ""}
@@ -120,13 +108,13 @@ export default async function PlayoffsPage({
         </>
       )}
 
-      <SectionRule aside="share of simulations">Odds</SectionRule>
+      <SectionRule>Odds</SectionRule>
       {odds.length === 0 ? (
         <Empty>No simulation stored for this season.</Empty>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {["AFC", "NFC"].map((conf) => (
-            <Panel key={conf} title={conf} meta="columns 1–7 are seed odds">
+            <Panel key={conf} title={conf}>
               <div className="scroll-x">
                 <table className="grid-table">
                   <thead>
@@ -181,25 +169,6 @@ export default async function PlayoffsPage({
         </div>
       )}
 
-      <Notes>
-        <p>
-          Remaining games are simulated from team ratings and seeded through the tiebreaker tree
-          that reproduces every actual playoff field from 1999 on exactly. The spread of results is
-          measured from real games rather than assumed.
-        </p>
-        <p>
-          A season under way is rated on what has happened in it. A season not yet played is rated
-          the way the game projections rate it — last year regressed toward the mean, because team
-          ratings only carry over at <span className="num">0.47</span>. Skipping that regression is
-          what produces clubs at 99% and 0% before anyone has kicked off; the honest preseason
-          spread runs from about five wins to eleven.
-        </p>
-        <p>
-          Ratings are held fixed across a simulated season, so injuries, trades and in-season
-          improvement are not modelled. Tiebreaker steps below strength of schedule are
-          approximated by net points; they decide a handful of cases a decade.
-        </p>
-      </Notes>
     </>
   );
 }

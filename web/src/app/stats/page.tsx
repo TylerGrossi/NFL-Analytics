@@ -68,7 +68,7 @@ export default async function StatsPage({
       dir,
       limit,
     }),
-    getTeamMap(),
+    getTeamMap(season),
   ]);
 
   const href = (patch: Record<string, string | number | undefined>) => {
@@ -99,7 +99,7 @@ export default async function StatsPage({
 
   return (
     <>
-      <SectionRule aside={`${rows.length} rows · ${season}`}>Stats</SectionRule>
+      <SectionRule>Stats</SectionRule>
 
       <SeasonNav
         seasons={manifest.seasons}
@@ -185,10 +185,7 @@ export default async function StatsPage({
       </div>
 
       {/* ------------------------------------------------------------ table */}
-      <Panel
-        title={`${group.label} · ${mode === "teams" ? "teams" : "players"}`}
-        meta={`sorted by ${sortCol?.label ?? sort} ${dir === "asc" ? "ascending" : "descending"}`}
-      >
+      <Panel>
         {rows.length === 0 ? (
           <Empty>Nothing clears the qualifier for this combination.</Empty>
         ) : (
@@ -254,13 +251,6 @@ export default async function StatsPage({
           </div>
         )}
       </Panel>
-
-      <div className="text-[11.5px] text-ink-3 mt-3 max-w-[86ch] leading-relaxed">
-        Every column here comes from the built parquet store, so a filter is a real query rather
-        than a precomputed page. Counting stats are league official via nflverse; EPA, success rate
-        and per-play rates are computed from play-by-play; separation, cushion, time to throw and
-        yards over expected come from Next Gen Stats and start in 2016.
-      </div>
     </>
   );
 }

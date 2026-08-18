@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PickCurrency } from "@/components/PickCurrency";
-import { Deck, Empty, Notes, Panel, PageHead, SectionRule, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Panel, PageHead, SectionRule, StatRow, StatTile, TeamMark } from "@/components/ui";
 import { PickCurve } from "@/components/PickCurve";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
@@ -48,33 +48,29 @@ export default async function DraftPage({
 
   return (
     <>
-      <PageHead aside={`${int(curve.length)} slots · 1999–${newest}`}>Draft</PageHead>
+      <PageHead>Draft</PageHead>
 
       <Deck>What a pick is actually worth, across twenty-seven drafts.</Deck>
 
-      <StatRow className="mb-5">
-        <StatTile label="Pick 1" value={num(at(1)?.value, 1)} meta="expected career AV" />
-        <StatTile label="Pick 32" value={num(at(32)?.value, 1)} meta="expected career AV" />
+      <StatRow spaced className="mb-5">
+        <StatTile label="Pick 1" value={num(at(1)?.value, 1)} />
+        <StatTile label="Pick 32" value={num(at(32)?.value, 1)} />
         <StatTile
           label="Top 5 vs late 1st"
           value={`${topOverLate.toFixed(2)}×`}
-          meta="production ratio, not price"
         />
         <StatTile
           label="Pick 1 contributors"
           value={pct(at(1)?.contributor_rate, 0)}
-          meta="reach 48 career games"
         />
         <StatTile
           label="Pick 200 contributors"
           value={pct(at(200)?.contributor_rate, 0)}
-          meta="reach 48 career games"
         />
       </StatRow>
 
       <Panel
         title="What each slot returns"
-        meta="dots are per-pick averages · line is the fitted curve"
         className="mb-4"
       >
         <div className="px-3 py-3">
@@ -92,7 +88,7 @@ export default async function DraftPage({
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2 items-start mb-4">
-        <Panel title="Who drafts well" meta="all 32 · value above what their slots were worth">
+        <Panel title="Who drafts well">
           <div className="scroll-x max-h-[900px] scroll-y">
             <table className="grid-table">
               <thead>
@@ -144,14 +140,14 @@ export default async function DraftPage({
         </div>
       </div>
 
-      <SectionRule aside={`${klass.length} picks`}>{season} class</SectionRule>
+      <SectionRule>{season} class</SectionRule>
       <SeasonNav seasons={seasons} active={season} href={(s) => `/draft?season=${s}`} />
 
       <div className="mb-4">
         <PickCurrency curve={pickCurve} mix={pickMix} />
       </div>
 
-      <Panel title={`${season} draft`} meta="career value to date, against the slot">
+      <Panel title={`${season} draft`}>
         {klass.length === 0 ? (
           <Empty>No picks stored for this class.</Empty>
         ) : (
@@ -224,27 +220,6 @@ export default async function DraftPage({
         )}
       </Panel>
 
-      <Notes>
-        <p>
-          <b>Why Approximate Value, not WAR.</b> AV is cruder than this site&apos;s WAR but exists
-          for every position in every year, which is what a question spanning twenty-seven drafts
-          needs. Defensive WAR needs charting that begins in 2018 and line WAR needs snap counts
-          from 2012, so a defender drafted in 2004 has none — he would silently score as a bust.
-          Career WAR is joined on anyway for the modern classes.
-        </p>
-        <p>
-          <b>Two choices carry the result.</b> A pick who never played counts as a zero rather than
-          dropping out of the sample; removing them is what makes late rounds look productive. And
-          the last four classes are excluded, because a recent pick has not had the chance to
-          accumulate value and counting him as a bust would bend the tail down.
-        </p>
-        <p>
-          The curve is a light rolling mean forced monotone by isotonic regression, weighted by how
-          many players stand behind each pick. Combine testing is joined where the player attended;
-          a blank forty means he did not run one. Franchises carry their history through
-          relocation, so Oakland&apos;s picks count for Las Vegas.
-        </p>
-      </Notes>
     </>
   );
 }
@@ -261,7 +236,7 @@ function Outliers({
   good: boolean;
 }) {
   return (
-    <Panel title={title} meta="career AV against the slot's expectation">
+    <Panel title={title}>
       <div className="scroll-x">
         <table className="grid-table">
           <thead>

@@ -122,10 +122,65 @@ export const getTeams = cache(async (): Promise<Team[]> => {
   return query<Team>(`select * from read_parquet('${table("teams")}') order by team`);
 });
 
-export const getTeamMap = cache(async (): Promise<Record<string, Team>> => {
-  const teams = await getTeams();
-  return Object.fromEntries(teams.map((t) => [t.team, t]));
+/**
+ * Clubs that have moved, under the code they played as.
+ *
+ * Kept out of `getTeams` — that list is the 32-club league and drives the team
+ * index and its routes. A 2015 table still has to draw San Diego, though, so
+ * the marks are loaded separately and merged into the lookup map only.
+ */
+export const getHistoricTeams = cache(async (): Promise<Team[]> => {
+  return (await readDataJson<Team[]>("teams_historic.json")) ?? [];
 });
+
+/** What a club was called, and what mark it wore, in seasons that differ from now. */
+export type TeamIdentity = {
+  team: string;
+  first: number;
+  last: number;
+  name: string;
+  nick: string;
+  logo: string | null;
+};
+
+export const getTeamIdentities = cache(async (): Promise<TeamIdentity[]> => {
+  return (await readDataJson<TeamIdentity[]>("team_identity.json")) ?? [];
+});
+
+/**
+ * Every club the store can name, keyed by the code the data uses.
+ *
+ * Pass a season to get that season's identity: Washington is the Redskins in
+ * 2015 rather than the Commanders, and a club that has rebranded shows the
+ * mark it actually wore. Without a season every club is its present-day self,
+ * which is right for a career page or an all-time table.
+ */
+export const getTeamMap = cache(
+  async (season?: number): Promise<Record<string, Team>> => {
+    const [teams, historic, identities] = await Promise.all([
+      getTeams(),
+      getHistoricTeams(),
+      getTeamIdentities(),
+    ]);
+    // Current codes last: a live club always wins a collision.
+    const map = Object.fromEntries([...historic, ...teams].map((t) => [t.team, t]));
+    if (season === undefined) return map;
+
+    for (const id of identities) {
+      const base = map[id.team];
+      if (!base || season < id.first || season > id.last) continue;
+      map[id.team] = {
+        ...base,
+        name: id.name,
+        nick: id.nick,
+        // A null logo means the era's mark could not be sourced; the club's
+        // current one stands in rather than leaving a hole in the table.
+        logo: id.logo ?? base.logo,
+      };
+    }
+    return map;
+  }
+);
 
 export const getTeam = cache(async (abbr: string): Promise<Team | null> => {
   return queryOne<Team>(

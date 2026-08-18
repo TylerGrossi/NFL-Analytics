@@ -9,7 +9,7 @@ const routes = ["/", "/scores", "/standings", "/playoffs", "/teams", "/teams/KC"
   "/fantasy/week",
   "/fantasy/week?view=ros",
   "/fantasy/week?view=wire",
-  "/fantasy/espn", "/week/2025/10", "/coaches", "/fantasy/league"];
+  "/fantasy/espn", "/week/2025/10", "/coaches", "/fantasy/league", "/glossary"];
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 let bad = 0;

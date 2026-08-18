@@ -146,7 +146,7 @@ export default async function HomePage() {
         </div>
 
         <div>
-          <SectionRule aside="Min 150 DB">Quarterback value</SectionRule>
+          <SectionRule>Quarterback value</SectionRule>
           <Panel>
             <div className="scroll-x">
               <table className="grid-table">

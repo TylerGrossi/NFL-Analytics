@@ -33,11 +33,11 @@ export default async function LeadersPage({
   const season = manifest.stats_season;
   const active = LEADER_CATEGORIES.find((c) => c.key === cat) ?? LEADER_CATEGORIES[0];
 
-  const [rows, teams] = await Promise.all([getLeaders(active.key, season, 50), getTeamMap()]);
+  const [rows, teams] = await Promise.all([getLeaders(active.key, season, 50), getTeamMap(season)]);
 
   return (
     <>
-      <SectionRule aside={`${season} · ${active.qualifier.replace(/_/g, " ")}`}>Leaders</SectionRule>
+      <SectionRule>Leaders</SectionRule>
 
       <div className="flex gap-1.5 flex-wrap mb-4">
         {LEADER_CATEGORIES.map((c) => (
@@ -55,7 +55,7 @@ export default async function LeadersPage({
         ))}
       </div>
 
-      <Panel title={active.label} meta={`sorted by ${active.unit}`}>
+      <Panel title={active.label}>
         <div className="scroll-x">
           <table className="grid-table">
             <thead>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getFantasyWeek,
   getFantasyWeeks,
@@ -100,14 +100,12 @@ export default async function FantasyWeekPage({
         <StatTile
           label="Matchup, quarterbacks"
           value="0.26"
-          meta="of the opponent's spread survives"
         />
-        <StatTile label="Running backs" value="0.13" meta="a 1.2-point swing at 12 ppg" />
-        <StatTile label="Receivers" value="0.10" meta="a 0.8-point swing at 12 ppg" />
+        <StatTile label="Running backs" value="0.13" />
+        <StatTile label="Receivers" value="0.10" />
         <StatTile
           label="Rates"
           value={anyPlayed ? "blended" : "projected"}
-          meta={anyPlayed ? "season to date plus projection" : "no games played yet"}
         />
       </StatRow>
 
@@ -164,7 +162,6 @@ export default async function FantasyWeekPage({
       {view === "week" && (
         <Panel
           title={`Week ${week} board`}
-          meta="projected PPR points · best start first"
         >
           {weekRows.length === 0 ? (
             <Empty>Nobody on a bye-free schedule at this position that week.</Empty>
@@ -232,7 +229,7 @@ export default async function FantasyWeekPage({
       )}
 
       {view === "ros" && (
-        <Panel title="Rest of season" meta="projected PPR points over the games left">
+        <Panel title="Rest of season">
           {ros.length === 0 ? (
             <Empty>No rest-of-season projection built.</Empty>
           ) : (
@@ -242,7 +239,7 @@ export default async function FantasyWeekPage({
       )}
 
       {view === "wire" && (
-        <Panel title="Waiver targets" meta="worth more from here than their ownership implies">
+        <Panel title="Waiver targets">
           {wire.length === 0 ? (
             <Empty>No ownership data to compare against.</Empty>
           ) : (
@@ -251,28 +248,6 @@ export default async function FantasyWeekPage({
         </Panel>
       )}
 
-      <Notes>
-        <p>
-          <b>The matchup adjustment is fit, not assumed.</b> Regressing 48,103 player weeks on the
-          opponent&apos;s prior-season points allowed — with the week being predicted held out of the
-          player&apos;s own rate — gives a coefficient of 0.26 at quarterback, 0.13 for backs, 0.10
-          for receivers and 0.09 for tight ends. Multiplying a projection by the raw index, which is
-          the usual construction, assumes 1.0.
-        </p>
-        <p>
-          In points that is a 2.4-point swing between the easiest and hardest draw for a
-          12-point-per-game quarterback, and 0.8 for a receiver. It breaks ties between close
-          starts; it is not a reason to bench a good player for a bad one.
-        </p>
-        <p>
-          <b>The rate</b> blends this season into the preseason projection at{" "}
-          <span className="num">games / (games + 4)</span>, the same shrinkage the projection model
-          is fit with. Defences are last season&apos;s and carry year to year at about 0.23, which
-          the coefficient already prices in — but a club that changed coordinator is not in this
-          data at all. Byes fall out of the schedule, so a player with no game has no row that week.
-          {!anyPlayed && " No games have been played yet, so every rate is still the preseason projection and the waiver list is ranked on ownership alone."}
-        </p>
-      </Notes>
     </>
   );
 }

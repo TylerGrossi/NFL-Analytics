@@ -48,14 +48,13 @@ export function LineupPanel({
   week: number;
 }) {
   const roster = toCandidates(team, proj);
-  const { starters, bench, total } = optimiseLineup(roster, slots);
+  const { starters, bench } = optimiseLineup(roster, slots);
   const swaps = swapCost(starters, bench);
 
   return (
     <>
       <Panel
         title={`Optimal lineup · week ${week}`}
-        meta={`${num(total, 1)} projected points`}
       >
         <div className="scroll-x">
           <table className="grid-table">
@@ -101,7 +100,6 @@ export function LineupPanel({
 
       <Panel
         title="Swaps worth making"
-        meta={swaps.length ? `${swaps.length} on the bench project higher` : "lineup is optimal"}
         className="mt-4"
       >
         {swaps.length === 0 ? (
@@ -176,7 +174,6 @@ export function MatchupPanel({
   return (
     <Panel
       title={`Week ${week} matchup`}
-      meta="optimal lineups, closed-form from the fitted spreads"
     >
       <div className="grid grid-cols-3 items-center gap-2 px-4 py-4 border-b border-rule">
         <div>
@@ -282,7 +279,6 @@ export function FreeAgentPanel({
   return (
     <Panel
       title={`Best available · week ${week}`}
-      meta={`${rostered.size} players rostered in this league`}
     >
       {free.length === 0 ? (
         <Empty>Every projected player is rostered.</Empty>

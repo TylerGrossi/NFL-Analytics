@@ -234,6 +234,21 @@ body {
     color: var(--ink-3);
   }
 
+  /* The spaced variant of a stat row: each figure on its own sheet with air
+     between them, rather than one sheet ruled into cells. */
+  .stat-row-spaced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-row-spaced > * {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgb(22 24 27 / 0.04);
+  }
+
   /* ---------- tables ---------- */
   .grid-table {
     width: 100%;
@@ -246,7 +261,7 @@ body {
     font-weight: 500;
     letter-spacing: 0.005em;
     color: var(--ink-3);
-    text-align: right;
+    text-align: center;
     padding: 7px 8px;
     border-bottom: 1px solid var(--rule-strong);
     white-space: nowrap;
@@ -256,9 +271,13 @@ body {
     z-index: 1;
   }
 
+  /* Figures sit centered under a centered header. Tabular numerals keep the digit
+     widths equal, so a column still reads as a column; the label and the number
+     share an axis rather than being pinned to opposite edges of the cell.
+     Text columns — the first, and anything marked `.l` — stay left below. */
   .grid-table td {
     padding: 6px 8px;
-    text-align: right;
+    text-align: center;
     border-bottom: 1px solid var(--rule);
     white-space: nowrap;
   }
@@ -326,6 +345,14 @@ body {
   .grid-table th:last-child,
   .grid-table td:last-child {
     padding-right: 14px;
+  }
+
+  /* The playoff cut line. It marks a position in the seeding, not a property
+     of the club sitting there, so it is drawn only while the table is in the
+     order the server sent — sort by any column and it retires rather than
+     following its row up the table and claiming a line that isn't a cut. */
+  .grid-table:not(:has(th[aria-sort])) tbody tr[data-cut] > td {
+    border-top: 2px solid var(--navy);
   }
 
   .grid-table tbody tr:hover {
@@ -491,6 +518,44 @@ body {
   .notes-body strong {
     color: var(--ink);
     font-weight: 600;
+  }
+
+  /* Explanatory copy already sitting in a half-width panel. The two-column
+     flow above is for a full-bleed notes block; inside a 690px panel it splits
+     four sentences into two ragged stacks. */
+  .notes-body.one-col {
+    columns: auto;
+  }
+
+  /* A formula is the claim itself, not decoration around it, so it is set on
+     its own line in the data face rather than inline in the sentence. */
+  .formula {
+    margin: 2px 0 10px;
+    padding: 8px 10px;
+    background: var(--panel-2);
+    border-left: 2px solid var(--rule-strong);
+    border-radius: 0 3px 3px 0;
+    break-inside: avoid;
+  }
+
+  .formula code {
+    display: block;
+    font-family: var(--font-data), monospace;
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .formula-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .notes-body code {
+    font-family: var(--font-data), monospace;
+    font-size: 11.5px;
+    color: var(--ink);
   }
 }
 

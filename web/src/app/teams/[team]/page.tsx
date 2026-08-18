@@ -125,22 +125,20 @@ export default async function TeamPage({
             <StatTile
               label="Off EPA / play"
               value={signed(eff.off_adj)}
-              meta={<><RankChip rank={eff.off_rank} /> opponent-adjusted</>}
             />
             <StatTile
               label="Def EPA / play"
               value={signed(eff.def_adj)}
-              meta={<><RankChip rank={eff.def_rank} /> lower is better</>}
             />
-            <StatTile label="Success rate" value={pct(eff.off_success as number)} meta="offense" />
-            <StatTile label="Points / drive" value={num(eff.off_points_per_drive as number, 2)} meta={<><RankChip rank={eff.off_ppd_rank as number} /> offense</>} />
-            <StatTile label="PROE" value={pts(eff.neutral_proe as number)} meta="neutral early downs" />
-            <StatTile label="Explosive rate" value={pct(eff.off_explosive_rate as number)} meta="20+ pass / 10+ rush" />
+            <StatTile label="Success rate" value={pct(eff.off_success as number)} />
+            <StatTile label="Points / drive" value={num(eff.off_points_per_drive as number, 2)} />
+            <StatTile label="PROE" value={pts(eff.neutral_proe as number)} />
+            <StatTile label="Explosive rate" value={pct(eff.off_explosive_rate as number)} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] mt-7">
             <div>
-              <SectionRule aside="EPA per play, by week">Season shape</SectionRule>
+              <SectionRule>Season shape</SectionRule>
               <Panel bodyClass="p-3">
                 {labels.length > 0 ? (
                   <>
@@ -171,7 +169,7 @@ export default async function TeamPage({
             </div>
 
             <div>
-              <SectionRule aside="vs league average">Splits</SectionRule>
+              <SectionRule>Splits</SectionRule>
               <Panel bodyClass="px-4 py-2">
                 {[
                   ["Pass offense", eff.off_pass_epa, eff.off_pass_rank],
@@ -220,20 +218,16 @@ export default async function TeamPage({
         <Empty>No efficiency data built for {season}.</Empty>
       )}
 
-      <SectionRule aside="charted participation data">Formations &amp; matchups</SectionRule>
-      <FormationPanels
-        splits={splits}
-        participation={participation[0]}
-        season={season}
-      />
+      <SectionRule>Formations &amp; matchups</SectionRule>
+      <FormationPanels splits={splits} participation={participation[0]} />
 
       {history.length > 1 && (
         <>
-          <SectionRule aside={`${history[history.length - 1].season}–${history[0].season}`}>
+          <SectionRule>
             Franchise history
           </SectionRule>
           <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr] items-start mb-2">
-            <Panel title="Net rating by season" meta="opponent-adjusted EPA per play">
+            <Panel title="Net rating by season">
               <div className="p-3">
                 <LineChart
                   labels={[...history].reverse().map((h) => `'${String(h.season).slice(2)}`)}
@@ -250,7 +244,7 @@ export default async function TeamPage({
                 />
               </div>
             </Panel>
-            <Panel title="Season by season" meta="click a year to load it">
+            <Panel title="Season by season">
               <div className="scroll-x max-h-[300px] scroll-y">
                 <table className="grid-table">
                   <thead>
@@ -297,7 +291,7 @@ export default async function TeamPage({
         </>
       )}
 
-      <SectionRule aside={`${season} · by snaps`}>Skill players</SectionRule>
+      <SectionRule>Skill players</SectionRule>
       <Panel>
         <div className="scroll-x">
           <table className="grid-table">
@@ -349,7 +343,7 @@ export default async function TeamPage({
 
       <div className="grid gap-4 lg:grid-cols-2 mt-7">
         <div>
-          <SectionRule aside="100+ defensive snaps">Defense</SectionRule>
+          <SectionRule>Defense</SectionRule>
           <Panel>
             <div className="scroll-x">
               <table className="grid-table">
@@ -393,7 +387,7 @@ export default async function TeamPage({
         </div>
 
         <div>
-          <SectionRule aside={`${season} results`}>Schedule</SectionRule>
+          <SectionRule>Schedule</SectionRule>
           <Panel>
             <div className="scroll-x max-h-[520px] scroll-y">
               <table className="grid-table">

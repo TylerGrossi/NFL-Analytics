@@ -26,7 +26,7 @@ export default async function ScoresPage({
 
   const [games, teams, previews] = await Promise.all([
     getGames(season, week),
-    getTeamMap(),
+    getTeamMap(season),
     getWeekPreviews(season, week),
   ]);
   const projection = Object.fromEntries(previews.map((p) => [p.game_id, p]));
@@ -40,7 +40,7 @@ export default async function ScoresPage({
 
   return (
     <>
-      <SectionRule aside={`${games.length} ${games.length === 1 ? "game" : "games"}`}>Scores</SectionRule>
+      <SectionRule>Scores</SectionRule>
 
       <SeasonNav
         seasons={seasons}
@@ -91,11 +91,11 @@ export default async function ScoresPage({
 
                 {[
                   {
-                    t: g.away_team, s: g.away_score, won: awayWon, qb: g.away_qb_name,
+                    t: g.away_team, s: g.away_score, won: awayWon,
                     proj: proj?.proj_away_score, wp: proj ? 1 - proj.home_wp : null,
                   },
                   {
-                    t: g.home_team, s: g.home_score, won: homeWon, qb: g.home_qb_name,
+                    t: g.home_team, s: g.home_score, won: homeWon,
                     proj: proj?.proj_home_score, wp: proj?.home_wp ?? null,
                   },
                 ].map((side) => (
@@ -106,7 +106,6 @@ export default async function ScoresPage({
                       name={teams[side.t]?.nick ?? side.t}
                     />
                     <span className="flex-1" />
-                    <span className="text-[11px] text-ink-3 truncate max-w-[92px]">{side.qb}</span>
                     {side.wp !== null && side.wp !== undefined && (
                       <span className="num text-[11px] text-ink-3 w-[30px] text-right shrink-0">
                         {Math.round(side.wp * 100)}%

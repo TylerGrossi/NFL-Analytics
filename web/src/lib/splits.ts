@@ -98,7 +98,7 @@ export const FILTERS: FilterGroup[] = [
     options: [
       ANY,
       { key: "shotgun", label: "Shotgun", where: "offense_formation = 'SHOTGUN'" },
-      { key: "under", label: "Under centre", where: "offense_formation = 'UNDER CENTER'" },
+      { key: "under", label: "Under center", where: "offense_formation = 'UNDER CENTER'" },
       { key: "pistol", label: "Pistol", where: "offense_formation = 'PISTOL'" },
       { key: "empty", label: "Empty", where: "offense_formation = 'EMPTY'" },
       { key: "iform", label: "I-form", where: "offense_formation = 'I_FORM'" },

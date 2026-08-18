@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getCoachBaseline,
   getCoachCareers,
@@ -34,7 +34,7 @@ export default async function CoachesPage({
   const sp = await searchParams;
   const sort = SORTS.find((s) => s.key === sp.sort)?.key ?? "games";
 
-  const [rows, base, extremes, teams, manifest] = await Promise.all([
+  const [rows, base, extremes, teams] = await Promise.all([
     getCoachCareers(sort, MIN_GAMES, 60),
     getCoachBaseline(),
     getCoachExtremes(MIN_GAMES),
@@ -53,7 +53,7 @@ export default async function CoachesPage({
 
   return (
     <>
-      <PageHead aside={`1999–${manifest.stats_season} · ${MIN_GAMES}+ games`}>
+      <PageHead>
         Coaches
       </PageHead>
 
@@ -63,26 +63,23 @@ export default async function CoachesPage({
       </Deck>
 
       <StatRow className="mb-5">
-        <StatTile label="Coaches tracked" value={String(rows.length)} meta={`${MIN_GAMES}+ games`} />
+        <StatTile label="Coaches tracked" value={String(rows.length)} />
         {extremes.unpredictable && (
           <StatTile
             label="Least predictable"
             value={extremes.unpredictable.coach.split(" ").slice(-1)[0]}
-            meta={`${num(extremes.unpredictable.value, 3)} bits of play-call entropy`}
           />
         )}
         {extremes.predictable && (
           <StatTile
             label="Most predictable"
             value={extremes.predictable.coach.split(" ").slice(-1)[0]}
-            meta={`${num(extremes.predictable.value, 3)} bits`}
           />
         )}
         {extremes.boldest && (
           <StatTile
             label="Boldest on fourth"
             value={extremes.boldest.coach.split(" ").slice(-1)[0]}
-            meta={`goes ${pct(extremes.boldest.value, 0)} of the time the model says go`}
           />
         )}
       </StatRow>
@@ -105,7 +102,6 @@ export default async function CoachesPage({
 
       <Panel
         title="Career records"
-        meta="rates weighted by snaps · league average in the last row"
       >
         <div className="scroll-x">
           <table className="grid-table">
@@ -192,33 +188,6 @@ export default async function CoachesPage({
         </div>
       </Panel>
 
-      <Notes>
-        <p>
-          <b>Play-call entropy</b> is the measurement here that does not exist elsewhere. For each
-          down and distance bucket — short, medium, long — take the coach&apos;s pass/run split and
-          compute its binary entropy in bits, then average the cells weighted by how often each
-          comes up. A coach who runs every first-and-ten and throws every third-and-long scores
-          near 0; one splitting 50/50 everywhere scores 1.0.
-        </p>
-        <p>
-          It measures <em>predictability, not quality</em>, and the two come apart: a coach can be
-          highly predictable because he is committed to something that works. Read it beside the
-          win rate rather than instead of it.
-        </p>
-        <p>
-          <b>Neutral game states only.</b> Everything except the record is computed from snaps with
-          win probability between 20% and 80%. A coach down twenty-one in the fourth is not calling
-          the game he wants to, and including those snaps makes every trailing team look pass-happy
-          and unpredictable.
-        </p>
-        <p>
-          <b>Rates are weighted by snaps</b>, not averaged across seasons, so a seventeen-game year
-          does not count the same as a three-week interim spell. Coaches need {MIN_GAMES} career
-          games to appear. <b>WP lost</b> is win probability surrendered to fourth-down decisions
-          the model disagreed with, per season — and the fourth-down model does not know personnel,
-          so a coach with a backup quarterback is charged the league-average conversion rate.
-        </p>
-      </Notes>
     </>
   );
 }

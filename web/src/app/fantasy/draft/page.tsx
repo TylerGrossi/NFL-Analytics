@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { DraftBoard } from "@/components/DraftBoard";
-import { Deck, Empty, Notes, PageHead, Panel, TeamMark } from "@/components/ui";
+import { Deck, Empty, PageHead, Panel, TeamMark } from "@/components/ui";
 import {
   getDraftBoard,
   getFantasySos,
@@ -35,7 +35,6 @@ export default async function FantasyDraftPage() {
   const STATUS = ["None", "Questionable", "Doubtful", "Out"];
   const rateAt = (s: string, pr: string) =>
     injuryRates.find((r) => r.status === s && r.practice === pr);
-  const depthAsOf = rows.find((r) => r.depth_as_of)?.depth_as_of ?? null;
 
   // One row per club, its schedule rank at each position.
   const byTeam = new Map<string, Record<string, number>>();
@@ -87,7 +86,7 @@ export default async function FantasyDraftPage() {
       <DraftBoard rows={rows} rankedOn={rankedOn} />
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] items-start mt-4">
-        <Panel title="What the projection is built on" meta="fit per position, 2006–2025">
+        <Panel title="What the projection is built on">
           <div className="scroll-x">
             <table className="grid-table">
               <thead>
@@ -123,7 +122,7 @@ export default async function FantasyDraftPage() {
           </div>
         </Panel>
 
-        <Panel title="Ranked but not projected" meta="rookies and players without a prior season">
+        <Panel title="Ranked but not projected">
           {unprojected.length === 0 ? (
             <Empty>Everyone on the board has a projection.</Empty>
           ) : (
@@ -165,7 +164,6 @@ export default async function FantasyDraftPage() {
       {injuryRates.length > 0 && (
         <Panel
           title="Will he play?"
-          meta="measured from 43,000 injury reports, 2018–2025"
           className="mt-4"
         >
           <div className="scroll-x">
@@ -232,7 +230,6 @@ export default async function FantasyDraftPage() {
       {matrix.length > 0 && (
         <Panel
           title="Schedule difficulty"
-          meta="1 = easiest · from last season's fantasy points allowed"
           className="mt-4"
         >
           <div className="scroll-x">
@@ -291,42 +288,6 @@ export default async function FantasyDraftPage() {
         </Panel>
       )}
 
-      <Notes>
-        <p>
-          <b>Reading the edge column.</b> Consensus rank minus this board&apos;s rank, so a positive
-          number means the projection likes a player more than the room does — a possible value, or
-          a possible blind spot in a model that knows nothing about holdouts, coaching changes or a
-          receiver who has just changed team. Treat large disagreements as questions, not answers.
-          The projection regresses hard toward the mean, so the top of the board is compressed: it
-          will systematically understate the player about to have a career year, because that is not
-          the forecastable part.
-        </p>
-        {depthAsOf && (
-          <p>
-            <b>The Depth column</b> is each player&apos;s rank on his own club&apos;s chart as of{" "}
-            {depthAsOf.slice(0, 10)} — decisive at quarterback, where a backup scores nothing, and
-            much less so at receiver, where three start every week.
-          </p>
-        )}
-        <p>
-          <b>Ageing is sharply position-dependent.</b> Backs start losing ground at 26 and shed more
-          than two points per game a year by 32. Receivers hold to about 26. Tight ends and
-          quarterbacks decline gently and late, which is why a 30-year-old quarterback is a much
-          safer hold than a 30-year-old back.
-        </p>
-        <p>
-          <b>Replacement level</b> assumes each team starts one quarterback, two backs, three
-          receivers and one tight end, doubling quarterbacks in superflex. The flex is deliberately
-          not spread across positions — that would make the baseline depend on how each league fills
-          it. Projections are per-game rates times sixteen games, so they price availability at
-          league average rather than each player&apos;s own injury history.
-        </p>
-        <p>
-          <b>On the backtest.</b> Four percent is the honest number. Most of what is knowable is
-          already in last season&apos;s line, and anyone claiming a large edge over that is selling
-          something.
-        </p>
-      </Notes>
     </>
   );
 }

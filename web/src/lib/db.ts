@@ -147,8 +147,19 @@ export function dataExists(): boolean {
 // A single instance is reused across requests; dev hot-reload would otherwise
 // open a new DuckDB per edit and leak file handles.
 declare global {
-  var __nflxDuck: Promise<DuckDBConnection> | undefined;
+  var __nflxDuck: Promise<DuckDBConnection[]> | undefined;
 }
+
+/**
+ * How many connections the pool holds.
+ *
+ * One connection cannot serve concurrent reads, but an instance can hand out
+ * several that can. Remote reads are network-bound at ~145 ms each, so a page
+ * firing six of them through `Promise.all` spent ~590 ms serialised and ~200 ms
+ * across a pool — measured against the live store. Four covers the widest
+ * fan-out on the site without holding open connections nothing uses.
+ */
+const POOL_SIZE = 4;
 
 /**
  * Where DuckDB keeps its extensions.
@@ -174,7 +185,7 @@ const EXTENSION_DIR = path.join(os.tmpdir(), "duckdb-extensions");
  */
 const HOME_DIR = os.tmpdir();
 
-async function connection(): Promise<DuckDBConnection> {
+async function pool(): Promise<DuckDBConnection[]> {
   if (!globalThis.__nflxDuck) {
     globalThis.__nflxDuck = (async () => {
       const instance = await DuckDBInstance.create(":memory:", {
@@ -182,11 +193,16 @@ async function connection(): Promise<DuckDBConnection> {
         home_directory: HOME_DIR,
         extension_directory: EXTENSION_DIR,
       });
-      const conn = await instance.connect();
-      // Load it up front rather than leaning on autoload, so a failure to fetch
-      // the extension surfaces here instead of inside an unrelated query.
-      if (REMOTE) await conn.run("INSTALL httpfs; LOAD httpfs;");
-      return conn;
+      const conns: DuckDBConnection[] = [];
+      for (let i = 0; i < POOL_SIZE; i++) {
+        const conn = await instance.connect();
+        // Load it up front rather than leaning on autoload, so a failure to
+        // fetch the extension surfaces here instead of inside an unrelated
+        // query. The download happens once; the rest read it off disk.
+        if (REMOTE) await conn.run(i === 0 ? "INSTALL httpfs; LOAD httpfs;" : "LOAD httpfs;");
+        conns.push(conn);
+      }
+      return conns;
     })();
   }
   return globalThis.__nflxDuck;
@@ -215,19 +231,33 @@ function normalize(value: unknown): unknown {
   return value;
 }
 
-// The native binding is not safe for concurrent reads on one connection — a
-// page firing eight queries through Promise.all crashes the worker. Queries are
-// milliseconds, so funnelling them through a promise chain costs nothing and
-// keeps call sites free to use Promise.all.
-let queue: Promise<unknown> = Promise.resolve();
+// The native binding is not safe for concurrent reads on **one** connection — a
+// page firing eight queries at a single connection through Promise.all crashes
+// the worker. Each connection therefore runs one query at a time, and a query
+// waits for whichever frees up first.
+//
+// Off local disk that queueing was free, because queries were milliseconds.
+// Reading remote parquet they are ~145 ms apiece, so serialising the whole page
+// onto one connection made every fan-out additive. Call sites are unchanged and
+// still use Promise.all; the pool is what makes that actually concurrent.
+const idle: DuckDBConnection[] = [];
+const waiting: ((conn: DuckDBConnection) => void)[] = [];
+let poolReady = false;
 
-function serialize<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.then(
-    () => undefined,
-    () => undefined
-  );
-  return run;
+async function withConnection<T>(fn: (conn: DuckDBConnection) => Promise<T>): Promise<T> {
+  const conns = await pool();
+  if (!poolReady) {
+    poolReady = true;
+    idle.push(...conns);
+  }
+  const conn = idle.pop() ?? (await new Promise<DuckDBConnection>((r) => waiting.push(r)));
+  try {
+    return await fn(conn);
+  } finally {
+    const next = waiting.shift();
+    if (next) next(conn);
+    else idle.push(conn);
+  }
 }
 
 /** Run a query and return plain row objects. */
@@ -235,8 +265,7 @@ export async function query<T = Record<string, unknown>>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
-  const conn = await connection();
-  const result = await serialize(() =>
+  const result = await withConnection((conn) =>
     params.length ? conn.runAndReadAll(sql, params as never[]) : conn.runAndReadAll(sql)
   );
   return result.getRowObjects().map((row) => {

@@ -1,5 +1,5 @@
 import { FourthDownCalculator } from "@/components/FourthDownCalculator";
-import { Deck, Notes, Panel, PageHead, SectionRule, TeamMark, StatTile } from "@/components/ui";
+import { Deck, Panel, PageHead, SectionRule, TeamMark, StatTile } from "@/components/ui";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
   getBuiltSeasons,
@@ -46,7 +46,7 @@ export default async function FourthDownPage({
 
   return (
     <>
-      <PageHead aside={`${season} · win probability model`}>Fourth down</PageHead>
+      <PageHead>Fourth down</PageHead>
 
       <Deck>
         Go, kick or punt — each priced in the same currency, the chance the team in possession wins.
@@ -54,7 +54,7 @@ export default async function FourthDownPage({
 
       <FourthDownCalculator />
 
-      <SectionRule aside={`${season} regular season, competitive situations only`}>
+      <SectionRule>
         How coaches actually decided
       </SectionRule>
 
@@ -68,33 +68,28 @@ export default async function FourthDownPage({
         <StatTile
           label="Decisions"
           value={int(league.situations)}
-          meta="win probability 5–95%"
         />
         <StatTile
           label="Went for it"
           value={pct(league.went / league.situations, 0)}
-          meta={`${int(league.went)} attempts`}
         />
         <StatTile
           label="Model says go"
           value={pct(league.go_optimal / league.situations, 0)}
-          meta={`${int(league.go_optimal)} situations`}
         />
         <StatTile
           label="Took the advice"
           value={pct(league.went_when_optimal / league.go_optimal, 0)}
-          meta="when going was optimal"
           tone="bad"
         />
         <StatTile
           label="Win prob. surrendered"
           value={num(league.wp_lost / 32, 1)}
-          meta="points per team, per season"
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr] items-start">
-        <Panel title="Aggressiveness" meta="all 32 · go rate when going is optimal">
+        <Panel title="Aggressiveness">
           <div className="scroll-x max-h-[452px] scroll-y">
             <table className="grid-table">
               <thead>
@@ -133,7 +128,7 @@ export default async function FourthDownPage({
         </Panel>
 
         <div className="flex flex-col gap-4">
-          <Panel title="Costliest decisions" meta={`${season}, by win probability given up`}>
+          <Panel title="Costliest decisions">
             <div className="scroll-x">
               <table className="grid-table">
                 <thead>
@@ -178,30 +173,6 @@ export default async function FourthDownPage({
         </div>
       </div>
 
-      <Notes>
-        <p>
-          <b>How each option is priced.</b> Going for it is the conversion rate times win
-          probability with a fresh set of downs, plus the failure case where the defence takes over
-          at the spot. Kicking and punting are valued the same way through their own outcomes. The
-          conversion model is fit on third and fourth down snaps pooled, because fourth down
-          attempts alone are a biased sample of situations coaches already liked.
-        </p>
-        <p>
-          <b>What it does not know.</b>
-        </p>
-        <ul>
-          <li>
-            Who is on the field. A backup quarterback and an elite short-yardage line get the same
-            league-average conversion rate.
-          </li>
-          <li>Kicker identity and weather — field goal probability is fit on distance alone.</li>
-          <li>The calculator grid holds timeouts at 3/3, which matters inside two minutes.</li>
-          <li>
-            Win probability is distilled from nflfastR&apos;s model, so it inherits that
-            model&apos;s assumptions rather than forming an independent opinion.
-          </li>
-        </ul>
-      </Notes>
     </>
   );
 }

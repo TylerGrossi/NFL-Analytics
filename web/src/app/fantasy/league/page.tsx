@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Deck, Panel, PageHead, TeamMark } from "@/components/ui";
 import { FreeAgentPanel, LineupPanel, MatchupPanel } from "@/components/LeagueTools";
 import {
   ScoreboardPanel,
@@ -127,11 +127,6 @@ export default async function LeaguePage({
   return (
     <>
       <PageHead
-        aside={
-          league
-            ? `${league.teamCount} teams · ${league.scoring.toUpperCase()} · ${league.season}`
-            : "Sleeper or ESPN"
-        }
       >
         {league ? league.name : "Your league"}
       </PageHead>
@@ -205,9 +200,6 @@ export default async function LeaguePage({
       {choices && (
         <Panel
           title={`${choices.display}'s leagues`}
-          meta={`${choices.leagues.length} on Sleeper · ${choices.season}${
-            choices.season !== manifest.scheduled_season ? " (last season)" : ""
-          }`}
           className="mb-4"
         >
           <div className="p-3 grid gap-2 grid-cols-[repeat(auto-fill,minmax(230px,1fr))]">
@@ -405,7 +397,7 @@ export default async function LeaguePage({
             className="grid gap-4 lg:grid-cols-[1.1fr_1fr] items-start"
             style={view === "power" ? undefined : { display: "none" }}
           >
-            <Panel title="Power rankings" meta="by projected rest-of-season points">
+            <Panel title="Power rankings">
               <div className="scroll-x">
                 <table className="grid-table">
                   <thead>
@@ -457,7 +449,6 @@ export default async function LeaguePage({
             {selected && (
               <Panel
                 title={selected.team.name}
-                meta="rest-of-season projection, best first"
               >
                 <div className="scroll-x max-h-[520px] scroll-y">
                   <table className="grid-table">
@@ -528,50 +519,6 @@ export default async function LeaguePage({
         </>
       )}
 
-      <Notes>
-        <p>
-          <b>Nothing is stored.</b> The league in the address bar is the entire state; there is no
-          account and no database. Bookmark the URL and the league comes back.
-        </p>
-        <p>
-          <b>Why Sleeper connects and ESPN does not.</b> Sleeper&apos;s read API is public, so a
-          username resolves to a user id and a user id lists their leagues — a genuine connect flow
-          with no password and no permissions granted. ESPN publishes no equivalent sign-in for
-          fantasy; the tools that appear to connect to it do so through a commercial partnership.
-          The only do-it-yourself route is copying <span className="num">SWID</span> and{" "}
-          <span className="num">espn_s2</span> out of a logged-in browser, and those are full
-          account credentials rather than scoped tokens, so this site will not ask for them.
-        </p>
-        <p>
-          <b>Sleeper</b> is fully open — no key, no login, 90 requests a minute.{" "}
-          <b>ESPN</b> serves public leagues from the id alone and refuses private ones. A private
-          ESPN league needs your <span className="num">SWID</span> and{" "}
-          <span className="num">espn_s2</span> cookies, which are full account credentials rather
-          than scoped tokens, so this site does not ask for them. Make the league public in
-          ESPN&apos;s settings, or use Sleeper.
-        </p>
-        <p>
-          <b>Matching players is the hard part.</b> Sleeper populates a gsis id for only about a
-          sixth of rostered players and an ESPN id for a quarter, so the bridge falls through four
-          layers — gsis, then ESPN id, then name with club, then name alone — and reaches about 93%
-          of a roster. The rest are players with no NFL snap to their name.
-        </p>
-        <p>
-          <b>Matchup odds are closed-form, not simulated.</b> Each lineup is a sum of independent
-          per-player normals, so the team total is normal and the margin is too — the same answer
-          every render, with no seed. The spread per player comes from a fitted
-          <span className="num"> sd = a + b × projection</span> per position: quarterback spread
-          barely moves with the projection while tight end spread scales steepest, so a projected
-          fifteen-point quarterback is a much safer start than a fifteen-point tight end.
-          Independence is the approximation — a quarterback and his own receiver are correlated, so
-          a stacked lineup really has a wider spread than this shows.
-        </p>
-        <p>
-          <b>Power rankings are roster strength, not results.</b> They sum the rest-of-season
-          projection across a roster, which is the right question in August and an incomplete one in
-          December — it takes no account of who you actually start each week.
-        </p>
-      </Notes>
     </>
   );
 }

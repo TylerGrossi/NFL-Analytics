@@ -109,7 +109,7 @@ export async function CompletedGame({ game }: { game: Game }) {
         <div className="flex flex-col gap-4">
           <Highlights eventId={game.espn} />
 
-          <Panel title="Win probability" meta={`${wp.length} plays · Gridiron model`}>
+          <Panel title="Win probability">
             {wp.length > 1 ? (
               <div className="pt-3">
                 <ChartExport
@@ -134,7 +134,7 @@ export async function CompletedGame({ game }: { game: Game }) {
             )}
           </Panel>
 
-          <Panel title="Drives" meta="bar is EPA produced" bodyClass="max-h-[420px] scroll-y">
+          <Panel title="Drives" bodyClass="max-h-[420px] scroll-y">
             {drives.length ? (
               <DriveChart drives={drives} teamColors={teamColors} />
             ) : (
@@ -142,7 +142,7 @@ export async function CompletedGame({ game }: { game: Game }) {
             )}
           </Panel>
 
-          <Panel title="Biggest plays" meta="by win probability added">
+          <Panel title="Biggest plays">
             <div className="scroll-x max-h-[360px] scroll-y">
               <table className="grid-table">
                 <thead>
@@ -176,7 +176,7 @@ export async function CompletedGame({ game }: { game: Game }) {
           </Panel>
 
           {fourths.length > 0 && (
-            <Panel title="Fourth downs" meta="scored against the decision model">
+            <Panel title="Fourth downs">
               <div className="scroll-x">
                 <table className="grid-table">
                   <thead>
@@ -215,7 +215,7 @@ export async function CompletedGame({ game }: { game: Game }) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <Panel title="Team comparison" meta="computed from the plays">
+          <Panel title="Team comparison">
             <div className="px-4 py-2">
               {COMPARE.map(([label, fn]) => (
                 <div key={label} className="flex items-center justify-between py-[7px] border-b border-rule last:border-0 text-[12.5px]">
@@ -231,7 +231,7 @@ export async function CompletedGame({ game }: { game: Game }) {
             </div>
           </Panel>
 
-          <Panel title="Box score" meta="EPA included">
+          <Panel title="Box score">
             <div className="scroll-x max-h-[560px] scroll-y">
               <table className="grid-table">
                 <thead>

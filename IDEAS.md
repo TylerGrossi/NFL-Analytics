@@ -70,7 +70,7 @@ only missing piece is text→SQL, and the schema is small enough to fit in a pro
 
 ### 1.4 Rules moved, which creates a timely analytics beat
 
-2026 is a light rules year centred on two things: **kickoffs** (touchback moved to
+2026 is a light rules year centered on two things: **kickoffs** (touchback moved to
 the 35 after the dynamic kickoff produced a 43% concussion reduction; nine players
 required in the setup zone) and officiating assistance. The **tush push survives** —
 no proposal was tabled at the 2026 annual meeting.

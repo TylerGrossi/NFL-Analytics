@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { rankTier } from "@/lib/format";
+import { ordinal, rankTier } from "@/lib/format";
 
 /** Shared surface + label primitives. Kept small on purpose — pages compose these. */
 
@@ -117,10 +117,14 @@ export function Notes({
 export function StatRow({
   children,
   className = "",
+  spaced = false,
 }: {
   children: ReactNode;
   className?: string;
+  /** Separate sheets with real gaps, rather than one sheet ruled into cells. */
+  spaced?: boolean;
 }) {
+  if (spaced) return <div className={`stat-row-spaced ${className}`}>{children}</div>;
   return (
     <div
       className={`panel grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-px bg-rule overflow-hidden ${className}`}
@@ -261,17 +265,108 @@ export function DivergingBar({
 }
 
 /** Percentile ramp used on player cards. */
-export function PercentileBar({ value }: { value: number | null | undefined }) {
+/**
+ * The percentile scale: blue at the bottom, red at the top, a light neutral
+ * through the middle.
+ *
+ * A percentile has a meaningful centre — the 50th is the league — so this is a
+ * diverging scale rather than a single ramp, and the midpoint is grey so that
+ * "average" reads as nothing in particular. The poles were checked rather than
+ * chosen by eye: blue #1b5fa8 against red #b3332a separates at ΔE 19.6 under
+ * protanopia and 29.5 under tritanopia, and both clear 3:1 on white. Each arm
+ * runs monotonically light-to-dark out from the middle, so rank survives as
+ * lightness alone in greyscale or print.
+ *
+ * The number is drawn inside the bubble, so colour never carries the value on
+ * its own.
+ */
+const P_LOW: [number, number, number] = [27, 95, 168]; // #1b5fa8
+const P_MID: [number, number, number] = [217, 212, 204]; // #d9d4cc
+const P_HIGH: [number, number, number] = [179, 51, 42]; // #b3332a
+
+function luminance([r, g, b]: [number, number, number]): number {
+  const lin = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+}
+
+function percentileColor(value: number): { fill: string; ink: string } {
+  const v = Math.max(0, Math.min(100, value));
+  const [from, to, raw] =
+    v >= 50 ? [P_MID, P_HIGH, (v - 50) / 50] : [P_LOW, P_MID, 1 - v / 50];
+  // Eased rather than linear. On a straight interpolation the whole upper half
+  // of the scale sits in washed terracotta — a 74th percentile looked no more
+  // red than a 60th, which is the one distinction the scale exists to draw.
+  // The exponent pulls saturation toward the poles and leaves only the genuine
+  // middle grey.
+  const t = raw ** 0.62;
+  const ends = v >= 50 ? [from, to] : [to, from];
+  const rgb = ends[0].map((c, i) => Math.round(c + (ends[1][i] - c) * t)) as [
+    number,
+    number,
+    number,
+  ];
+
+  // Pick whichever label colour actually has more contrast on this fill, rather
+  // than switching at a fixed lightness — near the middle of each arm the naive
+  // threshold chose white where dark ink reads better.
+  const L = luminance(rgb);
+  const onWhite = 1.05 / (L + 0.05);
+  const onInk = (L + 0.05) / (0.0074 + 0.05);
+  return {
+    fill: `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`,
+    ink: onWhite > onInk ? "#fff" : "var(--ink)",
+  };
+}
+
+/**
+ * One percentile row: a bar filled to the rank, coloured on the diverging scale,
+ * with the figure set at the filled end.
+ *
+ * The bar carries the value twice — length and colour — which is what lets a
+ * column of them be read down at a glance rather than one at a time.
+ */
+export function PercentileBar({
+  value,
+  label,
+}: {
+  value: number | null | undefined;
+  label?: string;
+}) {
   if (value === null || value === undefined) {
     return <span className="text-ink-3 text-[12px]">no qualifying sample</span>;
   }
-  const tone =
-    value >= 50
-      ? `color-mix(in oklab, var(--c1) ${20 + ((value - 50) / 50) * 80}%, var(--panel-3))`
-      : `color-mix(in oklab, var(--c2) ${20 + ((50 - value) / 50) * 80}%, var(--panel-3))`;
+  const v = Math.max(0, Math.min(100, value));
+  const { fill, ink } = percentileColor(v);
+  // Below this the fill is too short to hold its own number, so the figure sits
+  // just outside it in body ink instead of being squeezed against the edge.
+  const inside = v >= 16;
   return (
-    <span className="relative block h-[18px] rounded-[2px] bg-panel-3 overflow-hidden">
-      <span className="absolute inset-y-0 left-0 rounded-[2px]" style={{ width: `${value}%`, background: tone }} />
+    <span
+      className="relative block h-[20px] rounded-[3px] bg-panel-3 overflow-hidden"
+      title={label ? `${label}: ${ordinal(Math.round(v))} of qualifying players at the position` : undefined}
+    >
+      <span
+        className="absolute inset-y-0 left-0 rounded-[3px] flex items-center justify-end"
+        style={{ width: `${v}%`, background: fill, paddingRight: inside ? 6 : 0 }}
+      >
+        {inside && (
+          <span className="num font-semibold" style={{ color: ink, fontSize: 10.5 }}>
+            {Math.round(v)}
+          </span>
+        )}
+      </span>
+      {!inside && (
+        <span
+          className="absolute inset-y-0 num font-semibold flex items-center text-ink-2"
+          style={{ left: `calc(${v}% + 6px)`, fontSize: 10.5 }}
+        >
+          {Math.round(v)}
+        </span>
+      )}
+      {/* The league marker. A percentile plot with no 50 has no anchor. */}
       <span className="absolute inset-y-0 left-1/2 w-px bg-rule-strong opacity-70" />
     </span>
   );

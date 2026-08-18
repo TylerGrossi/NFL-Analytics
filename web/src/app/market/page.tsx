@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getManifest,
   getMarketDisagreements,
@@ -41,7 +41,7 @@ export default async function MarketPage() {
 
   return (
     <>
-      <PageHead aside={`${v.first_season}–${v.last_season} · walk-forward`}>
+      <PageHead>
         Model vs market
       </PageHead>
 
@@ -54,29 +54,24 @@ export default async function MarketPage() {
         <StatTile
           label="Model error"
           value={num(v.model.rmse, 2)}
-          meta="RMSE, points of margin"
         />
         <StatTile
           label="Closing line error"
           value={num(v.market.rmse, 2)}
-          meta={beatsMarket ? "the model is closer" : "the market is closer"}
           tone={beatsMarket ? "good" : "bad"}
         />
         <StatTile
           label="Straight up"
           value={pct(v.straight_up, 1)}
-          meta={`${v.straight_up_games.toLocaleString()} games`}
         />
         <StatTile
           label="Against the spread"
           value={pct(v.ats_hit_rate, 1)}
           tone={edgeVerdict === "good" ? "good" : edgeVerdict === "bad" ? "bad" : undefined}
-          meta={`${pct(v.breakeven, 1)} breaks even at −110`}
         />
         <StatTile
           label="Agreement with the line"
           value={num(v.correlation_with_line, 3)}
-          meta="correlation of projected margin"
         />
       </StatRow>
 
@@ -91,7 +86,6 @@ export default async function MarketPage() {
       <div className="grid gap-4 lg:grid-cols-2 items-start">
         <Panel
           title="Where the model disagrees most"
-          meta="hit rate by distance from the closing line"
         >
           {v.ats_by_edge.length === 0 ? (
             <Empty>Not enough graded games to bucket.</Empty>
@@ -154,7 +148,7 @@ export default async function MarketPage() {
           )}
         </Panel>
 
-        <Panel title="Win probability calibration" meta="predicted against what happened">
+        <Panel title="Win probability calibration">
           {v.calibration.length === 0 ? (
             <Empty>Not enough graded games.</Empty>
           ) : (
@@ -199,7 +193,6 @@ export default async function MarketPage() {
       {withLine.length > 0 && (
         <Panel
           title={`Week ${week} · model against the line`}
-          meta={`${manifest.scheduled_season} · positive means the model likes the home side more`}
           className="mt-4"
         >
           <div className="scroll-x">
@@ -257,7 +250,7 @@ export default async function MarketPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 items-start mt-4">
         {biases.length > 0 && (
-          <Panel title="Market bias by club" meta="average points beaten the line by">
+          <Panel title="Market bias by club">
             <div className="scroll-x max-h-[420px] scroll-y">
               <table className="grid-table">
                 <thead>
@@ -296,7 +289,7 @@ export default async function MarketPage() {
         )}
 
         {upsets.length > 0 && (
-          <Panel title="Biggest disagreements on record" meta="and who was right">
+          <Panel title="Biggest disagreements on record">
             <div className="scroll-x max-h-[420px] scroll-y">
               <table className="grid-table">
                 <thead>
@@ -342,34 +335,6 @@ export default async function MarketPage() {
         )}
       </div>
 
-      <Notes>
-        <p>
-          <b>Walk-forward only.</b> For each test season the model is fit on completed games from
-          earlier seasons and never sees the year it is scoring. Anything else is a fit reported as
-          a forecast. The first test season is {v.first_season}, which is where nflverse&apos;s
-          closing lines become reliable enough that a hit rate is not quietly biased by gaps.
-        </p>
-        <p>
-          <b>Sign convention.</b> nflverse stores <span className="num">spread_line</span> as the
-          points the <em>home</em> team is favoured by, so a home favourite is positive and it is
-          directly comparable to the projected margin. A posted betting line states the favourite as
-          a negative number; this page uses the stored convention throughout.
-        </p>
-        <p>
-          <b>Grading.</b> The model takes whichever side it rates above the market. A push is
-          excluded rather than counted as half a win — there were {v.ats_pushes} of them across{" "}
-          {v.games_with_line.toLocaleString()} games with a line. Totals are graded the same way:{" "}
-          {v.total_hit_rate === null ? "not enough data" : pct(v.total_hit_rate, 1)} over{" "}
-          {v.total_games.toLocaleString()} games.
-        </p>
-        <p>
-          <b>What the model does not know.</b> Who is starting at quarterback, injuries, weather,
-          rest, travel, or anything that happened after the last completed game. The closing line
-          knows all of it. That is most of the {num(v.market.rmse, 2)} against{" "}
-          {num(v.model.rmse, 2)} gap, and it is why the honest framing here is model evaluation
-          rather than a betting product.
-        </p>
-      </Notes>
     </>
   );
 }

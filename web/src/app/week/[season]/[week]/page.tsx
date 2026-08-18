@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Deck, Empty, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getPlayedWeeks,
   getTeamMap,
@@ -10,7 +10,7 @@ import {
   getWeekTeamSwings,
   getWeekUpsets,
 } from "@/lib/queries";
-import { num, pct, signed } from "@/lib/format";
+import { num, signed } from "@/lib/format";
 
 export const revalidate = 900;
 
@@ -50,7 +50,7 @@ export default async function WeekPage({
     getWeekFourthMisses(season, week, 8),
     getWeekUpsets(season, week, 6),
     getWeekPlayers(season, week, 10),
-    getTeamMap(),
+    getTeamMap(season),
   ]);
 
   const idx = weeks.findIndex((w) => w.season === season && w.week === week);
@@ -59,7 +59,6 @@ export default async function WeekPage({
 
   const best = swings.slice(0, 5);
   const worst = swings.slice(Math.max(best.length, swings.length - 5)).reverse();
-  const wpLost = misses.reduce((a, b) => a + b.wp_lost, 0);
 
   return (
     <>
@@ -88,7 +87,7 @@ export default async function WeekPage({
       </Deck>
 
       <div className="grid gap-4 lg:grid-cols-2 items-start">
-        <Panel title="Biggest plays" meta="by win probability added">
+        <Panel title="Biggest plays">
           {plays.length === 0 ? (
             <Empty>No play-by-play stored for this week.</Empty>
           ) : (
@@ -136,7 +135,7 @@ export default async function WeekPage({
           )}
         </Panel>
 
-        <Panel title="Best individual weeks" meta="skill positions, by PPR">
+        <Panel title="Best individual weeks">
           {players.length === 0 ? (
             <Empty>No weekly player data.</Empty>
           ) : (
@@ -184,7 +183,6 @@ export default async function WeekPage({
       <div className="grid gap-4 lg:grid-cols-2 items-start mt-4">
         <Panel
           title="Who played above and below themselves"
-          meta="EPA per play against their own season average"
         >
           {swings.length === 0 ? (
             <Empty>No plays stored for this week.</Empty>
@@ -238,11 +236,6 @@ export default async function WeekPage({
         <div className="flex flex-col gap-4">
           <Panel
             title="Costliest fourth downs"
-            meta={
-              misses.length
-                ? `${pct(wpLost / 100, 1)} of win probability given away`
-                : "scored against the decision model"
-            }
           >
             {misses.length === 0 ? (
               <Empty>Every fourth down this week matched the model.</Empty>
@@ -289,7 +282,7 @@ export default async function WeekPage({
           </Panel>
 
           {upsets.length > 0 && (
-            <Panel title="What the market missed" meta="result against the closing line">
+            <Panel title="What the market missed">
               <div className="scroll-x">
                 <table className="grid-table">
                   <thead>
@@ -321,31 +314,6 @@ export default async function WeekPage({
         </div>
       </div>
 
-      <Notes>
-        <p>
-          <b>Team swings</b> compare each club&apos;s EPA per play that week to its own season
-          average, not the league&apos;s. Who deviated from themselves is the weekly question; who
-          is good is what the season tables already answer. Twenty offensive plays minimum.
-        </p>
-        <p>
-          <b>Fourth downs</b> are the ones the decision model disagreed with, ranked by win
-          probability surrendered. The model does not know who is on the field — a backup
-          quarterback and an elite short-yardage line get the same conversion rate.
-        </p>
-        <p>
-          <b>Individual weeks</b> are ranked on PPR because win probability added is only
-          populated for passers in the weekly player table — in a sample week it covered 32 of 34
-          quarterbacks and one receiver out of 128. Ranking on it gave a list that was ten
-          quarterbacks by construction.
-        </p>
-        <p>
-          <b>Not here, and why.</b> Playoff-odds swings would be the natural fifth section, but
-          `playoff_odds` stores one snapshot per season rather than one per week, so there is no
-          history to difference. The same is true of the fantasy waiver list. Both need the
-          pipeline to start writing a weekly row before this page can carry them, and inventing
-          the movement from a single snapshot would be worse than leaving it out.
-        </p>
-      </Notes>
     </>
   );
 }

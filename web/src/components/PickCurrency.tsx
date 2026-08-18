@@ -41,7 +41,6 @@ export function PickCurrency({
   return (
     <Panel
       title="Two currencies, two answers"
-      meta="expected career return by pick, each scaled to pick 1 = 100"
     >
       <div className="px-4 pt-3">
         <ChartExport

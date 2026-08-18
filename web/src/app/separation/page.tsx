@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Deck, Empty, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getCoverageLeaders,
   getSeparationLeaders,
@@ -56,7 +56,7 @@ export default async function SeparationPage({
 
   return (
     <>
-      <PageHead aside={`${season} · 100 is average, 15 points a standard deviation`}>
+      <PageHead>
         Separation &amp; coverage
       </PageHead>
 
@@ -84,7 +84,7 @@ export default async function SeparationPage({
 
       <div className="grid gap-4 xl:grid-cols-2 items-start">
         {/* ------------------------------------------------ receivers */}
-        <Panel title="Receivers · separation score" meta="separation over what depth predicts">
+        <Panel title="Receivers · separation score">
           {receivers.length === 0 ? (
             <Empty>No Next Gen separation stored for this season.</Empty>
           ) : (
@@ -155,7 +155,7 @@ export default async function SeparationPage({
         </Panel>
 
         {/* ------------------------------------------------ defenders */}
-        <Panel title="Defenders · coverage score" meta="yards allowed against what depth predicts">
+        <Panel title="Defenders · coverage score">
           {defenders.length === 0 ? (
             <Empty>No coverage charting stored for this season.</Empty>
           ) : (
@@ -224,24 +224,6 @@ export default async function SeparationPage({
         </Panel>
       </div>
 
-      <Notes>
-        <p>
-          <b>Why depth-adjust at all.</b> Separation falls about{" "}
-          <b>0.12 yards for every yard of target depth</b> — screens and flat routes create space
-          almost automatically, a contested ball twenty yards downfield does not. Sorting on the raw
-          number produces a list of who runs shallow, not who gets open. Yards allowed per target
-          rise about 0.17 per yard of depth, so coverage is adjusted the same way. 100 is average,
-          15 points is one standard deviation.
-        </p>
-        <p>
-          <b>The two sides are not symmetric.</b> Receiver separation is tracking-derived, from Next
-          Gen Stats: the distance to the nearest defender when the ball arrives. Coverage score is
-          not — the league does not publish separation allowed, so a defender is measured on what
-          happened when he was thrown at, using Pro Football Reference charting. That carries the
-          quarterback&apos;s accuracy and the receiver&apos;s hands along with the coverage. True
-          separation allowed needs tracking data, public only through the Big Data Bowl.
-        </p>
-      </Notes>
     </>
   );
 }

@@ -18,13 +18,13 @@ const CONFS = ["AFC", "NFC"] as const;
 
 const VIEWS = [
   ["division", "Division"],
-  ["playoffs", "Playoff picture"],
+  ["playoffs", "Playoff Picture"],
   ["league", "League"],
 ] as const;
 
 type View = (typeof VIEWS)[number][0];
 
-type TeamMeta = Record<string, { logo?: string | null } | undefined>;
+type TeamMeta = Record<string, { logo?: string | null; nick?: string } | undefined>;
 
 /**
  * The name cell, shared by all three views.
@@ -58,7 +58,9 @@ function TeamCell({
           team={row.team}
           logo={teams[row.team]?.logo}
           href={`/teams/${row.team}`}
-          name={row.nick ?? row.team}
+          /* The map is resolved for the season being shown, so it carries the
+             club's name that year; the standings row carries today's. */
+          name={teams[row.team]?.nick ?? row.nick ?? row.team}
         />
       </span>
     </td>
@@ -100,7 +102,7 @@ export default async function StandingsPage({
   const seasons = await getBuiltSeasons();
   const season = Number(sp.season ?? manifest.stats_season);
   const view: View = VIEWS.some(([k]) => k === sp.view) ? (sp.view as View) : "division";
-  const [rows, teams] = await Promise.all([getStandings(season), getTeamMap()]);
+  const [rows, teams] = await Promise.all([getStandings(season), getTeamMap(season)]);
 
   // A tie column that is zero for all 32 teams is 34px of nothing in every one
   // of the eight division tables — most seasons have none.
@@ -239,11 +241,10 @@ export default async function StandingsPage({
                            show, so it is drawn on the table rather than left
                            to the reader counting rows. It follows the last
                            qualifier rather than a fixed row, because the field
-                           was six a side before 2020. */
-                        className={
-                          !r.in_playoffs && seeded[conf]?.[i - 1]?.in_playoffs
-                            ? "[&>td]:border-t-2 [&>td]:border-t-navy"
-                            : undefined
+                           was six a side before 2020. `globals.css` hides it
+                           while the table is sorted by something else. */
+                        data-cut={
+                          !r.in_playoffs && seeded[conf]?.[i - 1]?.in_playoffs ? "" : undefined
                         }
                       >
                         <td className="num text-ink-3">{r.seed}</td>
@@ -271,7 +272,7 @@ export default async function StandingsPage({
       )}
 
       {view === "league" && (
-        <Panel title="All 32">
+        <Panel>
           <div className="scroll-x">
             <table className="grid-table">
               <thead>

@@ -15,13 +15,17 @@ export function num(v: number | null | undefined, digits = 1): string {
   const s = v.toFixed(digits);
   // A value that rounds to zero from below prints "-0.00", which reads as a
   // real negative and is the sort of thing that makes a table look unfinished.
-  return /^-0(\.0*)?$/.test(s) ? s.slice(1) : s;
+  if (/^-0(\.0*)?$/.test(s)) return s.slice(1);
+  // Same true minus as `signed`. Without this a negative total set beside a
+  // signed one showed a hyphen next to a minus in the same column.
+  return s.startsWith("-") ? `${MINUS}${s.slice(1)}` : s;
 }
 
 export function int(v: number | null | undefined): string {
   if (v === null || v === undefined || Number.isNaN(v)) return "—";
   const n = Math.round(v);
-  return (Object.is(n, -0) ? 0 : n).toLocaleString("en-US");
+  const s = (Object.is(n, -0) ? 0 : n).toLocaleString("en-US");
+  return s.startsWith("-") ? `${MINUS}${s.slice(1)}` : s;
 }
 
 export function pct(v: number | null | undefined, digits = 1): string {

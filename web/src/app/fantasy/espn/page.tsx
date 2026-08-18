@@ -53,15 +53,13 @@ export default async function EspnValuePage() {
         <StatTile
           label="Biggest ESPN bargain"
           value={biggest?.name ?? "—"}
-          meta={biggest ? `${biggest.gap.toFixed(0)} picks later than consensus` : undefined}
         />
-        <StatTile label="Players compared" value={String(rows.length)} meta={`≥${MIN_OWNED}% rostered`} />
+        <StatTile label="Players compared" value={String(rows.length)} />
         {byPos.map((b) => (
           <StatTile
             key={b.pos}
             label={`${b.pos} drift`}
             value={`${b.mean > 0 ? "+" : ""}${b.mean.toFixed(1)}`}
-            meta={`mean gap · ${b.n} players`}
             tone={b.mean > 3 ? "good" : b.mean < -3 ? "bad" : "neutral"}
           />
         ))}
@@ -70,13 +68,11 @@ export default async function EspnValuePage() {
       <div className="grid gap-4 lg:grid-cols-2 items-start">
         <ValueTable
           title="Best value in ESPN leagues"
-          meta="fall later than the consensus rates them"
           rows={bargains}
           good
         />
         <ValueTable
           title="Reaches in ESPN leagues"
-          meta="go earlier than the consensus rates them"
           rows={reaches}
           good={false}
         />
@@ -106,17 +102,15 @@ export default async function EspnValuePage() {
 
 function ValueTable({
   title,
-  meta,
   rows,
   good,
 }: {
   title: string;
-  meta: string;
   rows: EspnValueRow[];
   good: boolean;
 }) {
   return (
-    <Panel title={title} meta={meta}>
+    <Panel title={title}>
       {rows.length === 0 ? (
         <Empty>Nothing clears the threshold.</Empty>
       ) : (

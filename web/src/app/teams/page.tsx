@@ -26,9 +26,16 @@ export default async function TeamsPage({
   const [efficiency, standings, teams] = await Promise.all([
     getTeamSeasons(season),
     getStandings(season),
-    getTeamMap(),
+    getTeamMap(season),
   ]);
   const recordFor = Object.fromEntries(standings.map((s) => [s.team, s]));
+  const quadrantPoints = efficiency.map((t) => ({
+    team: t.team,
+    x: t.off_adj,
+    y: t.def_adj,
+    color: teams[t.team]?.color ?? "var(--navy)",
+    logo: teams[t.team]?.logo,
+  }));
 
   return (
     <>
@@ -36,73 +43,49 @@ export default async function TeamsPage({
 
       <SeasonNav seasons={seasons} active={season} href={(s) => `/teams?season=${s}`} />
 
-      <div className="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(240px,1fr))] mb-6">
-        {efficiency.slice(0, 8).map((t) => {
-          const meta = teams[t.team];
-          const rec = recordFor[t.team];
-          return (
-            <Link
-              key={t.team}
-              href={`/teams/${t.team}?season=${season}`}
-              className="panel px-3 py-2.5 no-underline hover:border-rule-strong transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                {meta?.logo && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={meta.logo} alt="" width={30} height={30} />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-[13px] text-ink truncate">{meta?.nick ?? t.team}</div>
-                  <div className="text-[11px] text-ink-3 num">
-                    {rec ? `${rec.w}-${rec.l}${rec.t ? `-${rec.t}` : ""}` : ""} · net {signed(t.net_adj)}
-                  </div>
-                </div>
-                <span className="num text-[19px] font-semibold text-ink-2">{t.net_rank}</span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Quadrant flips the defensive axis itself — pass EPA allowed as stored. */}
-      <Panel
-        title="Efficiency landscape"
-        meta="opponent-adjusted EPA per play · up and right is better"
-        className="mb-6"
-      >
+      {/* Quadrant flips the defensive axis itself — pass EPA allowed as stored.
+          The SVG scales to its container width, so the viewBox is what sets both
+          the rendered height and the effective type scale — and the right box
+          differs by breakpoint. On a wide screen 1280x400 keeps the whole plot
+          above the fold and the labels near their nominal size; at 620 it stood
+          over 1000px tall with labels at twice size. On a phone that same wide
+          box collapses to ~100px of unreadable dots, so narrow screens get a
+          square one instead. Only one is ever displayed, so the hidden copy's
+          logos are never fetched. */}
+      <Panel title="Efficiency landscape" className="mb-6">
         <div className="px-3 py-3">
-          <Quadrant
-            points={efficiency.map((t) => ({
-              team: t.team,
-              x: t.off_adj,
-              y: t.def_adj,
-              color: teams[t.team]?.color ?? "var(--navy)",
-              logo: teams[t.team]?.logo,
-            }))}
-          />
+          <div className="hidden sm:block">
+            <Quadrant width={1280} height={400} points={quadrantPoints} />
+          </div>
+          <div className="sm:hidden">
+            <Quadrant width={620} height={620} points={quadrantPoints} />
+          </div>
         </div>
       </Panel>
 
-      <Panel title="Full efficiency table" meta="opponent-adjusted EPA per play">
+      <Panel title="Full efficiency table">
         <div className="scroll-x">
           <table className="grid-table">
             <thead>
               <tr>
                 <th>Team</th>
-                <th>Rec</th>
-                <th>Off EPA</th>
-                <th>Rk</th>
-                <th>Def EPA</th>
-                <th>Rk</th>
+                <th>Record</th>
+                <th>Offense EPA</th>
+                <th>Rank</th>
+                <th>Defense EPA</th>
+                <th>Rank</th>
                 <th>Net</th>
                 <th className="w-[90px]">Margin</th>
                 <th>Pass</th>
                 <th>Rush</th>
-                <th>Succ%</th>
-                <th>Expl%</th>
+                <th>Success%</th>
+                <th>Explosive%</th>
+                {/* PROE and SoS stay abbreviated: spelled out they run to
+                    "pass rate over expected" and "strength of schedule", each
+                    several times the width of the figures beneath them. */}
                 <th>PROE</th>
-                <th>Pts/Dr</th>
-                <th>3rd%</th>
+                <th>Points/drive</th>
+                <th>Third down%</th>
                 <th>SoS</th>
               </tr>
             </thead>

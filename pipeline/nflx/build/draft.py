@@ -28,7 +28,7 @@ from ..util import log, round_cols, step, write_parquet
 # the end of the sample rather than telling us anything about the picks.
 MATURE_AFTER = 4
 
-# Picks either side of centre averaged before the monotone fit.
+# Picks either side of center averaged before the monotone fit.
 SMOOTH_WINDOW = 9
 
 # A pick number needs this many players behind it before its mean is worth

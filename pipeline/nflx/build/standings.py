@@ -138,12 +138,16 @@ def build(games: pl.DataFrame, teams: pl.DataFrame, team_season: pl.DataFrame) -
         agg = agg.join(conf_rows, on=["season", "team"], how="left")
 
         if team_season.height:
+            # Efficiency is already folded onto the franchise, so a 2015 San
+            # Diego row has to look itself up as the Chargers or it shows no
+            # rating at all.
             agg = agg.join(
                 team_season.select(
-                    "season", "team", "off_rank", "def_rank", "net_rank", "net_adj", "sos"
+                    "season",
+                    pl.col("team").alias("_franchise"),
+                    "off_rank", "def_rank", "net_rank", "net_adj", "sos",
                 ),
-                on=["season", "team"],
-                how="left",
+                left_on=["season", franchise], right_on=["season", "_franchise"], how="left",
             )
 
         # Seeding comes from the real tiebreaker tree, which reproduces every

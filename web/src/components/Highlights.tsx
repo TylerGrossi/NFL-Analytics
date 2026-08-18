@@ -20,7 +20,7 @@ export async function Highlights({ eventId }: { eventId: string | null }) {
   if (clips.length === 0) return null;
 
   return (
-    <Panel title="Film" meta={`${clips.length} clip${clips.length === 1 ? "" : "s"} · ESPN`}>
+    <Panel title="Film">
       <div className="p-3 grid gap-3 grid-cols-[repeat(auto-fill,minmax(210px,1fr))]">
         {clips.map((c) => (
           <a

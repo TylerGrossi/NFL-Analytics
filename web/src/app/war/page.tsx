@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, Notes, Panel, PageHead, StatTile, TeamMark } from "@/components/ui";
+import { Deck, Empty, Panel, PageHead, StatTile, TeamMark } from "@/components/ui";
 import {
   getAllTimeSeasons,
   getCareerWar,
@@ -49,41 +49,7 @@ function roleBreakdown(p: {
   return shown.length ? shown.join(" · ") : "—";
 }
 
-/** What the WAR column means once a position filter narrows the board. */
-const POS_WAR_NOTE: Record<string, string> = {
-  QB: "passing WAR",
-  RB: "rushing and receiving WAR",
-  WR: "receiving WAR",
-  TE: "receiving WAR",
-  DEF: "defensive WAR",
-  OL: "blocking WAR",
-  ST: "kicking, punting and return WAR",
-};
 
-/** How the number is built. Lives in the notes, not above the leaderboard. */
-const STEPS: [string, string][] = [
-  ["Price a win", "Team wins regressed on point differential fixes what a point is worth."],
-  [
-    "Attribute the play",
-    "The quarterback owns the dropback, scrambles included, so a scramble is not also paid as a rush. A receiver is judged on the whole target against what a throw of that depth was worth. Defenders get charted production, linemen their unit's blocking split by snaps.",
-  ],
-  [
-    "Shrink small samples",
-    "Ridge with the opponent controlled, then each rate regressed again by its own sample. Rushing efficiency repeats at 0.16 year to year and return rate at 0.23, so both are pulled hard toward the mean.",
-  ],
-  [
-    "Measure replacement",
-    "Everyone outside the starter pool sets the bar, from what happened on their plays rather than from fitted coefficients — tying it to the fit swung a workhorse back by half a win for no football reason.",
-  ],
-  [
-    "Report points, then wins",
-    "PAR is what the model computes; WAR is PAR over the cost of a win. Both are shown so the conversion stays visible.",
-  ],
-  [
-    "Check it against the eye test",
-    "Team backtests can pass while individual attribution is broken, because errors cancel inside a team. Every change is checked against the production leaders before it ships.",
-  ],
-];
 
 const VIEWS = [
   { key: "season", label: "Season" },
@@ -139,11 +105,6 @@ export default async function WarPage({
   return (
     <>
       <PageHead
-        aside={
-          view === "season"
-            ? `${season} regular season`
-            : `${manifest.seasons[0]}–${manifest.seasons[manifest.seasons.length - 1]} · ${manifest.seasons.length} seasons`
-        }
       >
         Wins above replacement
       </PageHead>
@@ -212,15 +173,6 @@ export default async function WarPage({
               : view === "alltime"
                 ? "Best seasons ever"
                 : "Leaderboard"
-          }
-          meta={
-            view === "career"
-              ? `${manifest.seasons[0]}–${manifest.seasons[manifest.seasons.length - 1]}`
-              : view === "alltime"
-                ? "any season in the store"
-                : position === "ALL"
-                  ? "total WAR, all roles"
-                  : `${POS_WAR_NOTE[position] ?? "WAR"} · kicking and returns live under Specialists`
           }
         >
           {rows.length === 0 ? (
@@ -323,10 +275,9 @@ export default async function WarPage({
                 standalone
                 label="Points per win"
                 value={num(validation.points_per_win, 1)}
-                meta="PAR ÷ this = WAR"
               />
 
-              <Panel title="Backtests" meta="published either way">
+              <Panel title="Backtests">
                 <div className="px-4 py-2">
                   <Check
                     label="Team WAR vs actual wins"
@@ -386,7 +337,7 @@ export default async function WarPage({
               </Panel>
 
               {validation.mean_war_by_position && (
-                <Panel title="Positional value" meta="mean WAR per player season">
+                <Panel title="Positional value">
                   <div className="px-4 py-2">
                     {Object.entries(validation.mean_war_by_position).map(([pos, value]) => (
                       <div
@@ -408,58 +359,6 @@ export default async function WarPage({
         </div>
       </div>
 
-      <Notes>
-        <p>
-          <b>How the number is built.</b>
-        </p>
-        <ul>
-          {STEPS.map(([title, body]) => (
-            <li key={title}>
-              <b>{title}.</b> {body}
-            </li>
-          ))}
-        </ul>
-        <p>
-          <b>Reading the backtests.</b> Compare the first number to the ceiling rather than to 1.0.
-          Point differential knows every score and still only reaches{" "}
-          {validation?.pythagorean_vs_wins_r?.toFixed(2) ?? "0.91"} against single-season records,
-          because a season carries a lot of luck. Complete MLB WAR lands between about 0.64 and
-          0.87. The stability figure is a volume statistic and belongs beside other volume
-          statistics — passing yards repeat at{" "}
-          {validation?.stability_benchmarks?.passing_yards?.toFixed(2) ?? "0.37"} over the same
-          seasons, while rate statistics repeat higher because they carry no playing-time noise.
-        </p>
-        <p>
-          <b>What it does not cover.</b>
-        </p>
-        <ul>
-          <li>
-            <b>Linemen share one unit number</b>, split by snaps, so five starters with the same
-            snaps get the same value. Separating them needs per-snap block charting, which is not
-            public.
-          </li>
-          <li>
-            <b>Scrambles belong to the pass.</b> A scramble is a dropback, so its value sits in
-            passing. Counting it again as a rush paid quarterbacks twice and filled the low-volume
-            end of the rushing pool with high-efficiency scramblers, inflating the replacement bar
-            until every workhorse back graded below it.
-          </li>
-          <li>
-            An earlier version valued defenders by plus-minus over snaps and ranked them by how good
-            their defence was — T.J. Watt graded negative. Starters take ~95% of a unit&apos;s snaps,
-            leaving no on/off variation to identify anyone. Charted production replaced it.
-          </li>
-          <li>
-            A pressure is priced at what a pressure is worth on average, so beating a double team
-            and running free unblocked pay the same.
-          </li>
-          <li>
-            A quarterback&apos;s number still contains his supporting cast: he takes nearly every
-            dropback for his team, so the two cannot be separated within a season.
-          </li>
-          <li>Receivers are not charged for drops. Long snappers have no public data and are not rated.</li>
-        </ul>
-      </Notes>
     </>
   );
 }

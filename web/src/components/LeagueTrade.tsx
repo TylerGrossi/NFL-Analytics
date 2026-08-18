@@ -125,7 +125,7 @@ export function TradeSimulator({
 
   return (
     <>
-      <Panel title="Trade simulator" meta="click players to build a proposal">
+      <Panel title="Trade simulator">
         <div className="grid grid-cols-3 items-center gap-2 px-4 py-4 border-b border-rule">
           <div>
             <div className="text-[12.5px] font-medium truncate">{mine.name}</div>
@@ -214,7 +214,7 @@ export function ScoreboardPanel({
   const rows = history.filter((h) => h.week === week);
   if (rows.length === 0) {
     return (
-      <Panel title={`Week ${week} scoreboard`} meta="results">
+      <Panel title={`Week ${week} scoreboard`}>
         <Empty>Week {week} has not been played.</Empty>
       </Panel>
     );
@@ -231,7 +231,7 @@ export function ScoreboardPanel({
     league.teams.find((t) => t.id === id)?.name ?? `Team ${id}`;
 
   return (
-    <Panel title={`Week ${week} scoreboard`} meta={`${pairs.size} matchups`}>
+    <Panel title={`Week ${week} scoreboard`}>
       <div className="scroll-x">
         <table className="grid-table">
           <tbody>
@@ -272,13 +272,12 @@ export function SeasonSummaryPanel({
 }) {
   if (history.length === 0) {
     return (
-      <Panel title="Season summary" meta="once weeks are on the board">
+      <Panel title="Season summary">
         <Empty>No completed weeks yet.</Empty>
       </Panel>
     );
   }
 
-  const weeks = [...new Set(history.map((h) => h.week))].sort((a, b) => a - b);
   const name = (id: string) =>
     league.teams.find((t) => t.id === id)?.name ?? `Team ${id}`;
 
@@ -303,7 +302,7 @@ export function SeasonSummaryPanel({
   const blowout = margins[margins.length - 1];
 
   return (
-    <Panel title="Season summary" meta={`${weeks.length} weeks played`}>
+    <Panel title="Season summary">
       <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(170px,1fr))] px-4 py-3.5">
         <div>
           <div className="label">Highest week</div>

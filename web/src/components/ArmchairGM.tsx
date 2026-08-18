@@ -127,27 +127,23 @@ export function ArmchairGM({
           label="Cap space"
           value={money(space)}
           tone={space < 0 ? "bad" : "good"}
-          meta={space < 0 ? "over the cap" : "room to sign"}
         />
-        <Tile label="Committed" value={money(committed)} meta={`of ${money(capLimit)}`} />
-        <Tile label="Dead money" value={money(dead)} meta={`${changed} moves made`} />
-        <Tile label="Freed" value={money(freed)} meta="from cuts and restructures" />
+        <Tile label="Committed" value={money(committed)} />
+        <Tile label="Dead money" value={money(dead)} />
+        <Tile label="Freed" value={money(freed)} />
         <Tile
           label="Roster PAR"
           value={totalPar.toFixed(0)}
-          meta={`points above replacement, ${warSeason}`}
         />
         <Tile
           label="PAR per $10M"
           value={committed > 0 ? ((totalPar / committed) * 10).toFixed(1) : "—"}
-          meta="value efficiency"
         />
         {depth.length > 0 && (
           <Tile
             label="Starters cut"
             value={String(startersCut)}
             tone={startersCut > 0 ? "bad" : undefined}
-            meta="jobs opened on the depth chart"
           />
         )}
       </div>

@@ -51,7 +51,7 @@ from ..util import log, round_cols, step, write_json, write_parquet
 # so earlier classes are missing value by construction rather than by outcome.
 PICK_FIRST, PICK_LAST = 2012, 2021
 
-# Picks either side of centre averaged before the monotone fit, matching the
+# Picks either side of center averaged before the monotone fit, matching the
 # treatment the AV curve already gets in `draft.py`.
 SMOOTH_WINDOW = 9
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, DivergingBar, Empty, Notes, Panel, PageHead, StatRow, StatTile } from "@/components/ui";
+import { Deck, DivergingBar, Empty, Panel, PageHead, StatRow, StatTile } from "@/components/ui";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
   getFantasyRegression,
@@ -101,7 +101,6 @@ export default async function FantasyPage({
             key={r.position}
             label={`${r.position} replacement`}
             value={num(r.replacement_ppg, 1)}
-            meta={`points per game · ${r.position}${r.replacement_rank}`}
           />
         ))}
       </StatRow>
@@ -119,7 +118,6 @@ export default async function FantasyPage({
 
       <Panel
         title={`${pos === "ALL" ? "Overall" : pos} board`}
-        meta="ranked by value over replacement"
         className="mb-4"
       >
         {board.length === 0 ? (
@@ -193,13 +191,11 @@ export default async function FantasyPage({
         <div className="grid gap-4 lg:grid-cols-2 items-start">
           <Regression
             title="Outscored their usage"
-            meta="candidates to come back down"
             rows={over}
             tone="bad"
           />
           <Regression
             title="Underscored their usage"
-            meta="candidates to come back up"
             rows={under}
             tone="good"
           />
@@ -218,25 +214,6 @@ export default async function FantasyPage({
         yards and so begin in 2006; before that the column is blank. VOR is scored in full PPR and
         multiplies the per-game edge by games played, so missed time costs rather than being ignored.
       </div>
-      <Notes>
-        <p>
-          Raw fantasy points rank every quarterback above every running back and tell you nothing,
-          because you never choose between them — a lineup takes one of the first and several of the
-          second. Value over replacement prices each player against the freely available alternative
-          at his own position, the same idea WAR applies to real football. Replacement is the last
-          startable player in a twelve-team league: QB12, RB24, WR36, TE12. The flex is deliberately
-          not spread across positions, since that would make the baseline depend on how each league
-          fills it.
-        </p>
-        <p>
-          Expected points come from nflverse&apos;s opportunity model, which prices every carry and
-          target by down, distance, field position and air yards.{" "}
-          <b>It scores on its own system — it counts first downs — so its totals run above the PPR
-          figures beside them and the two must not be subtracted from one another.</b>{" "}
-          Both its actual and its expected are carried through so the gap is always computed inside
-          one scoring system. Expected points need air yards and so begin in 2006.
-        </p>
-      </Notes>
 
     </>
   );
@@ -244,17 +221,15 @@ export default async function FantasyPage({
 
 function Regression({
   title,
-  meta,
   rows,
   tone,
 }: {
   title: string;
-  meta: string;
   rows: Awaited<ReturnType<typeof getFantasyRegression>>;
   tone: "good" | "bad";
 }) {
   return (
-    <Panel title={title} meta={meta}>
+    <Panel title={title}>
       {rows.length === 0 ? (
         <Empty>Not enough data for this season.</Empty>
       ) : (

@@ -42,7 +42,6 @@ export function AgingCurve({
   return (
     <Panel
       title="Aging curve"
-      meta={`${fellBack ? "all positions" : posGroup} · wins against an age-24 baseline`}
     >
       <div className="p-3">
         <ChartExport

@@ -132,7 +132,7 @@ export default async function GamePage({ params }: { params: Promise<{ id: strin
 
         <div className="flex flex-col gap-4">
           {summary && summary.teamStats.length > 0 && (
-            <Panel title="Team stats" meta="live box score">
+            <Panel title="Team stats">
               <div className="px-4 py-2">
                 {summary.teamStats.map((s) => {
                   const split = barSplit(s.away, s.home);
@@ -211,7 +211,7 @@ export default async function GamePage({ params }: { params: Promise<{ id: strin
             </Panel>
           )}
 
-          <Panel title={`${manifest.stats_season} form`} meta="opponent-adjusted EPA per play">
+          <Panel title={`${manifest.stats_season} form`}>
             <div className="scroll-x">
               <table className="grid-table">
                 <thead>

@@ -75,11 +75,9 @@ function UsageRows({ rows, dimension }: { rows: FormationSplit[]; dimension: str
 export function FormationPanels({
   splits,
   participation,
-  season,
 }: {
   splits: FormationSplit[];
   participation: Record<string, number | string | null> | undefined;
-  season: number;
 }) {
   const by = (dimension: string, side: string) =>
     splits
@@ -101,47 +99,41 @@ export function FormationPanels({
           <Tile
             label="Pressure rate allowed"
             value={pct(participation.pressure_rate_allowed as number, 1)}
-            meta="of dropbacks"
           />
           <Tile
             label="EPA when pressured"
             value={signed(participation.epa_pressured as number)}
-            meta={`clean ${signed(participation.epa_clean as number)}`}
           />
           <Tile
             label="Pressure rate generated"
             value={pct(participation.pressure_rate as number, 1)}
-            meta="defense"
           />
           <Tile
             label="Blitz rate"
             value={pct(participation.blitz_rate as number, 1)}
-            meta="5+ rushers sent"
           />
           <Tile
             label="Man coverage"
             value={pct(participation.man_rate as number, 1)}
-            meta="of coverage snaps"
           />
           <Tile
             label="Box faced"
             value={num(participation.box_faced as number, 2)}
-            meta={`stacked ${pct(participation.stacked_box_rate as number, 0)}`}
           />
         </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2 items-start">
-        <Panel title="Offensive formation" meta={formationNote(season)}>
+        <Panel title="Offensive formation">
           <UsageRows rows={formations} dimension="formation" />
         </Panel>
-        <Panel title="Personnel grouping" meta="backs + tight ends">
+        <Panel title="Personnel grouping">
           <UsageRows rows={personnel} dimension="personnel" />
         </Panel>
-        <Panel title="Coverage shell" meta="defense, on dropbacks">
+        <Panel title="Coverage shell">
           <UsageRows rows={coverage} dimension="coverage" />
         </Panel>
-        <Panel title="Man vs zone" meta="defense, on dropbacks">
+        <Panel title="Man vs zone">
           <UsageRows rows={manZone} dimension="man_zone" />
         </Panel>
       </div>
@@ -149,10 +141,6 @@ export function FormationPanels({
   );
 }
 
-/** The feed changed vendors in 2023 and the vocabulary shrank; say so. */
-function formationNote(season: number) {
-  return season >= 2023 ? "FTN charting · 3 buckets" : "NFL feed · 7 buckets";
-}
 
 function Tile({ label, value, meta }: { label: string; value: string; meta?: string }) {
   return (

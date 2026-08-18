@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, DivergingBar, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Deck, DivergingBar, Empty, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getBuiltSeasons,
   getManifest,
@@ -97,11 +97,6 @@ export default async function LabPage({
   return (
     <>
       <PageHead
-        aside={
-          baseline
-            ? `${int(baseline.plays)} plays match · league ${signed(baseline.epa)} EPA`
-            : undefined
-        }
       >
         Lab
       </PageHead>
@@ -182,9 +177,6 @@ export default async function LabPage({
       {/* ------------------------------------------------------------ results */}
       <Panel
         title={`${grouping.label} · ${seasonFrom === seasonTo ? seasonFrom : `${seasonFrom}–${seasonTo}`}`}
-        meta={
-          lowerIsBetter ? "best defenses first — least EPA allowed" : "best first, by EPA per play"
-        }
       >
         {ordered.length === 0 ? (
           <Empty>
@@ -260,22 +252,6 @@ export default async function LabPage({
         )}
       </Panel>
 
-      <Notes>
-        <p>
-          Nothing is precomputed, so any combination of filters is fair game — third and long from
-          the red zone, 12 personnel against man coverage, whatever you want.
-        </p>
-        <p>
-          <b>*</b> Formation, personnel, coverage and pressure come from charted participation data
-          and only exist from {CHARTED_FROM}; selecting one narrows the season range automatically.
-          Everything else reaches back to {oldest}.
-        </p>
-        <p>
-          The bar compares each row to the league average <em>for the same split</em>, not to the
-          league overall — a red zone leaderboard is judged against red zone offence, which is the
-          comparison that means something.
-        </p>
-      </Notes>
     </>
   );
 }

@@ -24,7 +24,7 @@ const PORT = process.env.PORT ?? "3000";
 const routes = ["/", "/scores", "/standings", "/playoffs", "/teams", "/teams/KC", "/stats",
   "/war", "/separation", "/lab", "/market", "/tools/fourth-down", "/tools/armchair-gm",
   "/players/00-0033873", "/games/2025_22_SEA_NE", "/draft", "/fantasy",
-  "/fantasy/draft", "/fantasy/week", "/fantasy/espn", "/week/2025/10", "/coaches", "/fantasy/league"];
+  "/fantasy/draft", "/fantasy/week", "/fantasy/espn", "/week/2025/10", "/coaches", "/fantasy/league", "/glossary"];
 
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });

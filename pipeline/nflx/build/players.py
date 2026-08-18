@@ -17,11 +17,12 @@ PERCENTILE_METRICS = {
     "QB": [("epa_per_db", True), ("cpoe", True), ("play_success", True),
            ("sack_rate", False), ("passing_yards", True), ("passing_tds", True)],
     "RB": [("epa_per_rush", True), ("play_success", True), ("rushing_yards", True),
-           ("yards_per_carry", True), ("receiving_epa", True)],
+           ("yards_per_carry", True), ("receiving_epa", True), ("yprr", True)],
     "WR": [("epa_per_target", True), ("play_success", True), ("receiving_yards", True),
-           ("wopr", True), ("racr", True), ("avg_separation", True), ("avg_yac_above_expectation", True)],
+           ("wopr", True), ("racr", True), ("avg_separation", True),
+           ("avg_yac_above_expectation", True), ("yprr", True), ("tprr", True)],
     "TE": [("epa_per_target", True), ("play_success", True), ("receiving_yards", True),
-           ("wopr", True), ("avg_separation", True)],
+           ("wopr", True), ("avg_separation", True), ("yprr", True), ("tprr", True)],
 }
 
 
@@ -123,6 +124,60 @@ def _ngs_season(season: int, stat_type: str) -> pl.DataFrame:
     )
 
 
+# --------------------------------------------------------------- routes
+
+# Routes are only as good as the participation feed, which starts in 2016 and is
+# published after the postseason ends. Earlier seasons get a null rather than a
+# wrong number.
+ROUTES_FLOOR = 100
+
+
+def _routes(season: int, plays: pl.DataFrame) -> pl.DataFrame:
+    """Routes run per player, from who was on the field for each dropback.
+
+    This is the standard public approximation, not PFF's charted figure: it
+    counts dropback snaps played, so a back who stayed in to block and a tight
+    end who chipped both count as having run a route. For receivers the two are
+    close; for backs and tight ends this reads a little low per route. The
+    alternative — dividing by targets — is a different statistic that already
+    exists on the card as yards per target.
+    """
+    empty = pl.DataFrame(schema={"player_id": pl.String, "routes": pl.UInt32})
+    part = nv.participation(season)
+    if part.height == 0:
+        return empty
+
+    part = part.select(
+        pl.col("nflverse_game_id").alias("game_id"),
+        pl.col("play_id").cast(pl.Float64),
+        "offense_players",
+    )
+    # Regular season only. The season line this divides into comes from
+    # `player_stats(season, "reg")`, so counting January routes against
+    # September-to-December yards would quietly penalise every team that went
+    # deep — Smith-Njigba's 2025 read 572 routes against a 485-route numerator.
+    dropbacks = plays.filter(
+        (pl.col("qb_dropback") == 1) & (pl.col("season_type") == "REG")
+    ).select("game_id", pl.col("play_id").cast(pl.Float64))
+    matched = dropbacks.join(part, on=["game_id", "play_id"], how="inner")
+    if matched.height == 0:
+        log(f"! participation {season} did not join to play-by-play; no routes")
+        return empty
+
+    return (
+        matched.filter(
+            pl.col("offense_players").is_not_null()
+            & (pl.col("offense_players").str.len_chars() > 0)
+        )
+        .with_columns(pl.col("offense_players").str.split(";"))
+        .explode("offense_players")
+        .filter(pl.col("offense_players").str.len_chars() > 0)
+        .group_by("offense_players")
+        .len()
+        .rename({"offense_players": "player_id", "len": "routes"})
+    )
+
+
 # --------------------------------------------------------------- season lines
 
 def build_seasons(seasons: list[int], index: pl.DataFrame) -> pl.DataFrame:
@@ -169,6 +224,7 @@ def build_seasons(seasons: list[int], index: pl.DataFrame) -> pl.DataFrame:
                     how="left",
                 )
                 .join(snaps, on="pfr_id", how="left")
+                .join(_routes(season, plays), on="player_id", how="left")
             )
 
             df = df.with_columns(
@@ -189,6 +245,25 @@ def build_seasons(seasons: list[int], index: pl.DataFrame) -> pl.DataFrame:
                 (pl.col("passing_epa").fill_null(0)
                  + pl.col("rushing_epa").fill_null(0)
                  + pl.col("receiving_epa").fill_null(0)).alias("total_epa"),
+            )
+
+            # Yards and targets per route run. Restricted to the positions that
+            # run routes: everyone on the field for a dropback picks up a route
+            # in the raw count, so a tackle would otherwise post a 0.00 YPRR and
+            # a quarterback would divide his own passing line by his dropbacks.
+            # The floor keeps a receiver with nine routes off the leaderboards.
+            runs_routes = pl.col("position").is_in(["WR", "TE", "RB", "FB"])
+            enough = runs_routes & (pl.col("routes") >= ROUTES_FLOOR)
+            df = df.with_columns(
+                pl.when(runs_routes).then(pl.col("routes")).otherwise(None).alias("routes"),
+                pl.when(enough)
+                .then(pl.col("receiving_yards") / pl.col("routes"))
+                .otherwise(None)
+                .alias("yprr"),
+                pl.when(enough)
+                .then(pl.col("targets") / pl.col("routes"))
+                .otherwise(None)
+                .alias("tprr"),
             )
             frames.append(df)
 

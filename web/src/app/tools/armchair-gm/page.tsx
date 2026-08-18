@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArmchairGM } from "@/components/ArmchairGM";
-import { Deck, Empty, Notes, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Deck, Empty, Panel, PageHead, TeamMark } from "@/components/ui";
 import {
   getCapSummary,
   getCapTable,
@@ -40,7 +40,7 @@ export default async function ArmchairGmPage({
 
   return (
     <>
-      <PageHead aside={`${season} league year · cap $${num(teamSummary?.cap_limit ?? 0, 1)}M`}>
+      <PageHead>
         Armchair GM
       </PageHead>
 
@@ -79,7 +79,7 @@ export default async function ArmchairGmPage({
       )}
 
       <div className="grid gap-4 lg:grid-cols-2 mt-7">
-        <Panel title="Best value contracts" meta={`league-wide · PAR per $10M of ${season} cap`}>
+        <Panel title="Best value contracts">
           <div className="scroll-x">
             <table className="grid-table">
               <thead>
@@ -118,7 +118,7 @@ export default async function ArmchairGmPage({
           </div>
         </Panel>
 
-        <Panel title="Cap space around the league" meta={`${season}, before any cuts`}>
+        <Panel title="Cap space around the league">
             <div className="scroll-x max-h-[360px] scroll-y">
               <table className="grid-table">
                 <thead>
@@ -156,37 +156,6 @@ export default async function ArmchairGmPage({
         </Panel>
       </div>
 
-      <Notes>
-        <p>
-          <b>Value</b> is last season&apos;s PAR — points above replacement — against this
-          season&apos;s cap hit, so it rewards what a player did rather than what he will do.
-          Rookies and free agent signings have no PAR, and offensive linemen carry none yet.
-        </p>
-        <ul>
-          <li>
-            Cuts are treated as pre-June-1. The post-June-1 designation, which splits dead money
-            across two years, is not modelled.
-          </li>
-          <li>
-            A restructure converts base salary above the minimum and spreads it over the years
-            remaining, capped at five. Void years and option bonuses are not added.
-          </li>
-          <li>
-            Only contracts running into {season} are counted, so a club whose deals mostly expire
-            first shows space its real sheet does not have — tenders, options and existing dead
-            money are not carried.
-          </li>
-          <li>
-            The depth chart is the newest nflverse has published for {season}, which in August is a
-            camp projection rather than a week 1 lineup. No depth entry means practice squad,
-            injured reserve, or signed since.
-          </li>
-          <li>
-            Injury designations appear only once the league publishes reports for {season}.
-            Carrying last season&apos;s forward would show a January designation as current status.
-          </li>
-        </ul>
-      </Notes>
     </>
   );
 }

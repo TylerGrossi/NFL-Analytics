@@ -155,7 +155,7 @@ export function GamePreview({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] items-start">
-        <Panel title="Head to head" meta={`${ratingSeason} opponent-adjusted`}>
+        <Panel title="Head to head">
           {!home.season || !away.season ? (
             <Empty>No rated season for one of these clubs.</Empty>
           ) : (
@@ -250,7 +250,7 @@ function Matchup({
 }) {
   const rows = Math.max(receivers.length, defenders.length);
   return (
-    <Panel title={title} meta="score vs score">
+    <Panel title={title}>
       {rows === 0 ? (
         <Empty>No charted receivers or coverage defenders for these clubs.</Empty>
       ) : (
@@ -305,7 +305,6 @@ function Personnel({ side }: { side: Side }) {
   return (
     <Panel
       title={`${side.meta?.nick ?? side.abbr} personnel`}
-      meta={side.depth[0]?.depth_as_of ? `depth chart ${side.depth[0].depth_as_of.slice(0, 10)}` : undefined}
     >
       <div className="px-4 py-3 flex flex-col gap-2.5">
         {byPos.map((g) => (

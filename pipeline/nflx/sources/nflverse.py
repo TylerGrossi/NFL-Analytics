@@ -75,6 +75,27 @@ def snap_counts(season: int) -> pl.DataFrame:
 
 
 @lru_cache(maxsize=None)
+def participation(season: int) -> pl.DataFrame:
+    """Who was on the field, play by play.
+
+    Empty rather than raising for the seasons the feed does not cover, and for
+    the current season before the postseason ends, when it is published.
+    """
+    try:
+        part = nfl.load_participation(season)
+    except Exception:
+        part = pl.DataFrame()
+    if part.height == 0 or "offense_players" not in part.columns:
+        return pl.DataFrame(
+            schema={
+                "nflverse_game_id": pl.String, "play_id": pl.Int32,
+                "offense_players": pl.String,
+            }
+        )
+    return part
+
+
+@lru_cache(maxsize=None)
 def ngs(season: int, stat_type: str) -> pl.DataFrame:
     """Next Gen Stats begin in 2016; earlier seasons come back empty."""
     try:
