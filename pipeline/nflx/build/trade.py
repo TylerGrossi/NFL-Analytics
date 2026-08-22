@@ -21,22 +21,35 @@ defensible slope to fit at those correlations.
 
 So this module ships what holds up:
 
-**Aging, by the delta method.** Mean WAR by age is dominated by survivorship —
+Both curves below are now fit in **expected points added**, which is the site's
+headline currency. WAR is still built and still has `/war`; it is no longer the
+number a reader meets on a player card, a draft board or an aging curve.
+
+The switch costs one thing and it is worth stating plainly: **EPA is charged to
+the player who touched the ball**, so a dropback, a carry and a target are the
+only plays it prices. Defenders and offensive linemen have no EPA of their own,
+so they have no aging curve here any more — where WAR could rate them from
+charted production and snap shares, EPA cannot. Those groups now fall through to
+no curve rather than to a misleading one.
+
+**Aging, by the delta method.** Mean EPA by age is dominated by survivorship —
 weak players leave, so the average at 32 is an average over survivors, and a
 naive curve "peaks" wherever attrition is harshest. Fit that way, running backs
 peaked at 21 and corners at 21, which is nonsense. Comparing the *same player*
 in consecutive seasons controls for who he is, and produces the curves the
-literature expects: quarterbacks climbing to about 28, backs declining from 22,
-corners falling away after 26.
+literature expects: quarterbacks climbing hard from 22 to 24 and then holding a
+long plateau to about 32 before falling away, receivers and tight ends peaking
+at 24-25, and backs declining from 22 with no peak to speak of.
 
 **Pick value, and the thing nobody says out loud.** In Approximate Value a
-top-five pick is worth about 1.8x a late first. In WAR it is worth eleven times
-as much. The whole of that gap is quarterbacks: among top-ten picks from
-2012-2021 a quarterback returned 12.1 career WAR and *every other position
-returned under 1.6*, while AV rated them nearly equal (59.8 against 52.8 for
-interior linemen). AV deliberately compresses the gap between a franchise
-quarterback and a good guard; WAR does not. Both curves are written out, with
-the position mix behind each band, because the divergence is the finding.
+top-five pick is worth about 1.8x a late first. In a value currency that prices
+the quarterback honestly it is worth many times that. The whole of that gap is
+quarterbacks: among top-ten picks from 2012-2021 a quarterback returned an order
+of magnitude more career value than every other position, while AV rated them
+nearly equal (59.8 against 52.8 for interior linemen). AV deliberately
+compresses the gap between a franchise quarterback and a good guard; EPA does
+not. Both curves are written out, with the position mix behind each band,
+because the divergence is the finding.
 """
 
 from __future__ import annotations
@@ -57,6 +70,10 @@ SMOOTH_WINDOW = 9
 
 # Snaps before a season counts toward an aging delta. Below this the difference
 # is mostly playing time, not development.
+#
+# Measured on offensive snaps rather than on EPA plays. A receiver's EPA plays
+# are his targets, and a 200-target floor would leave a dozen men in the league;
+# snaps are the playing-time question this threshold is actually asking.
 AGING_MIN_PLAYS = 200
 
 # Paired observations before a position group gets its own curve; thinner
@@ -70,6 +87,34 @@ AGE_FROM, AGE_TO = 22, 36
 ROOKIE_YEARS = 4
 
 
+def _epa_seasons(seasons: pl.DataFrame) -> pl.DataFrame:
+    """Season EPA lines in the shape the curve fitters want.
+
+    `plays` here is offensive snaps, not EPA plays — see `AGING_MIN_PLAYS`.
+    """
+    touched = sum(
+        (pl.col(c).fill_null(0) for c in ("dropbacks", "rush_plays", "target_plays")
+         if c in seasons.columns),
+        pl.lit(0),
+    )
+    return (
+        seasons.filter(pl.col("season_type") == "REG")
+        .with_columns(touched.alias("touches"))
+        # A lineman posts 1,000 snaps and no EPA of his own, which would fit a
+        # flat curve out of nothing at all. Only men who touched the ball are
+        # priced here.
+        .filter(pl.col("touches") > 0)
+        .select(
+            "player_id",
+            "season",
+            pl.col("total_epa").fill_null(0.0).alias("epa"),
+            pl.col("off_snaps").fill_null(0).alias("plays"),
+        )
+        .group_by("player_id", "season")
+        .agg(pl.col("epa").sum(), pl.col("plays").sum())
+    )
+
+
 def _with_age(war: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
     return war.join(
         players.select("player_id", "birth_date", "pos_group"), on="player_id", how="inner"
@@ -78,16 +123,16 @@ def _with_age(war: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
     ).filter(pl.col("age").is_between(AGE_FROM, AGE_TO))
 
 
-def _aging(war: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
-    """Expected WAR change from one age to the next, same player."""
-    d = _with_age(war, players).filter(pl.col("plays") >= AGING_MIN_PLAYS)
+def _aging(epa: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
+    """Expected EPA change from one age to the next, same player."""
+    d = _with_age(epa, players).filter(pl.col("plays") >= AGING_MIN_PLAYS)
     nxt = d.select(
         "player_id",
         (pl.col("season") - 1).alias("season"),
-        pl.col("war").alias("war_next"),
+        pl.col("epa").alias("epa_next"),
     )
     pairs = d.join(nxt, on=["player_id", "season"], how="inner").with_columns(
-        (pl.col("war_next") - pl.col("war")).alias("delta")
+        (pl.col("epa_next") - pl.col("epa")).alias("delta")
     )
     if pairs.height == 0:
         return pl.DataFrame()
@@ -116,9 +161,9 @@ def _aging(war: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
     # The raw deltas are noisy enough to be unplottable — quarterbacks came out
     # at +0.32, +0.10, +0.24, -0.38, +0.43 across five consecutive ages, which
     # is sampling error, not development. Each delta is averaged with its
-    # neighbours, weighted by how many pairs stand behind it, before the curve
+    # neighbors, weighted by how many pairs stand behind it, before the curve
     # is accumulated. That is the same light-smoothing-then-shape treatment the
-    # draft curve gets, and it imposes no parametric form on the ageing.
+    # draft curve gets, and it imposes no parametric form on the aging.
     curves = []
     for grp in out["pos_group"].unique().to_list():
         s = out.filter(pl.col("pos_group") == grp).sort("age")
@@ -142,23 +187,23 @@ def _aging(war: pl.DataFrame, players: pl.DataFrame) -> pl.DataFrame:
         curves.append(
             s.with_columns(
                 pl.Series("delta_smooth", smoothed),
-                pl.Series("rel_war", [v - base for v in levels]),
+                pl.Series("rel_epa", [v - base for v in levels]),
             )
         )
     return pl.concat(curves)
 
 
 def _pick_curve(picks: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
-    """Expected career WAR by pick number, and the position mix behind it."""
+    """Expected career EPA by pick number, and the position mix behind it."""
     mature = picks.filter(pl.col("season").is_between(PICK_FIRST, PICK_LAST))
     if mature.height == 0:
         return pl.DataFrame(), pl.DataFrame()
 
     raw = (
-        mature.with_columns(pl.col("career_war").fill_null(0.0).alias("w"))
+        mature.with_columns(pl.col("career_epa").fill_null(0.0).alias("w"))
         .group_by("pick")
         .agg(
-            pl.col("w").mean().alias("raw_war"),
+            pl.col("w").mean().alias("raw_epa"),
             pl.col("value").mean().alias("raw_av"),
             pl.len().alias("n"),
         )
@@ -173,7 +218,7 @@ def _pick_curve(picks: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
     half = SMOOTH_WINDOW // 2
 
     fitted = {}
-    for col, out in (("raw_war", "war"), ("raw_av", "av")):
+    for col, out in (("raw_epa", "epa"), ("raw_av", "av")):
         val = raw[col].to_numpy()
         padded = np.pad(val, (half, half), mode="edge")
         smoothed = np.convolve(padded, np.ones(SMOOTH_WINDOW) / SMOOTH_WINDOW, mode="valid")
@@ -184,10 +229,10 @@ def _pick_curve(picks: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
         )
 
     curve = raw.with_columns(
-        pl.Series("war", fitted["war"]),
+        pl.Series("epa", fitted["epa"]),
         pl.Series("av", fitted["av"]),
     ).with_columns(
-        (pl.col("war") / max(fitted["war"][0], 1e-9)).alias("war_relative"),
+        (pl.col("epa") / max(fitted["epa"][0], 1e-9)).alias("epa_relative"),
         (pl.col("av") / max(fitted["av"][0], 1e-9)).alias("av_relative"),
     )
 
@@ -200,16 +245,16 @@ def _pick_curve(picks: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
             .when(pl.col("pick") <= 64).then(pl.lit("33-64"))
             .when(pl.col("pick") <= 105).then(pl.lit("65-105"))
             .otherwise(pl.lit("106+")).alias("band"),
-            pl.col("career_war").fill_null(0.0).alias("w"),
+            pl.col("career_epa").fill_null(0.0).alias("w"),
         )
         .group_by("band", "position")
         .agg(
             pl.len().alias("n"),
-            pl.col("w").mean().alias("war"),
+            pl.col("w").mean().alias("epa"),
             pl.col("value").mean().alias("av"),
         )
         .filter(pl.col("n") >= 5)
-        .sort(["band", "war"], descending=[False, True])
+        .sort(["band", "epa"], descending=[False, True])
     )
     return curve, mix
 
@@ -252,30 +297,30 @@ def _dollars_per_win(contracts: pl.DataFrame, war: pl.DataFrame, season: int) ->
 
 
 def build(
-    contracts: pl.DataFrame, war: pl.DataFrame, players: pl.DataFrame,
-    picks: pl.DataFrame, season: int,
+    contracts: pl.DataFrame, war: pl.DataFrame, seasons: pl.DataFrame,
+    players: pl.DataFrame, picks: pl.DataFrame, season: int,
 ) -> pl.DataFrame:
     """Aging curves and pick value. Player dollar surplus is deliberately absent."""
     with step("trade value"):
-        aging = _aging(war, players)
+        aging = _aging(_epa_seasons(seasons), players)
         if aging.height:
             write_parquet(round_cols(aging, 4), "trade_aging")
-            for grp in ("QB", "RB", "WR", "CB", "ALL"):
+            for grp in ("QB", "RB", "WR", "TE", "ALL"):
                 s = aging.filter(pl.col("pos_group") == grp).sort("age")
                 if s.height:
-                    peak = s.sort("rel_war", descending=True).head(1)
+                    peak = s.sort("rel_epa", descending=True).head(1)
                     log(f"  aging {grp:4s} peaks at {int(peak['age'][0])}")
 
         curve, mix = _pick_curve(picks)
         if curve.height:
             write_parquet(round_cols(curve, 4), "trade_picks")
             write_parquet(round_cols(mix, 3), "trade_pick_mix")
-            top = curve.filter(pl.col("pick") <= 5)["war"].mean()
-            late = curve.filter(pl.col("pick").is_between(25, 32))["war"].mean()
+            top = curve.filter(pl.col("pick") <= 5)["epa"].mean()
+            late = curve.filter(pl.col("pick").is_between(25, 32))["epa"].mean()
             top_av = curve.filter(pl.col("pick") <= 5)["av"].mean()
             late_av = curve.filter(pl.col("pick").is_between(25, 32))["av"].mean()
-            log(f"  pick 1 = {curve['war'][0]:.1f} career WAR · "
-                f"top-5 vs late-1st {top / max(late, 1e-9):.1f}x in WAR, "
+            log(f"  pick 1 = {curve['epa'][0]:.1f} career EPA · "
+                f"top-5 vs late-1st {top / max(late, 1e-9):.1f}x in EPA, "
                 f"{top_av / max(late_av, 1e-9):.1f}x in AV")
 
         # Published for the record, and as the evidence for why player surplus

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
  * `SeasonNav` stays a server component because its callers pass `href` as a
  * function, and a function cannot cross the server/client boundary. It resolves
  * every season to a real URL first and hands this component the resolved list,
- * which is plain data and serialises fine.
+ * which is plain data and serializes fine.
  */
 export function SeasonSelect({
   options,

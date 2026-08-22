@@ -24,7 +24,7 @@ CDN = "https://cdn.espn.com/core/nfl"
 FANTASY = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons"
 
 # Identify honestly, but without a `name/version` token: ESPN's edge 403s any
-# unrecognised agent carrying one, so "hashmark-analytics/0.1 (…)" was being
+# unrecognized agent carrying one, so "hashmark-analytics/0.1 (…)" was being
 # refused on every endpoint while the same string minus a version is served.
 # Verified deterministic — 4/4 refusals with the version, 4/4 responses without.
 HEADERS = {"User-Agent": "gridiron-analytics (personal project)"}
@@ -166,7 +166,7 @@ def fantasy_players(season: int) -> list[dict] | None:
 
     This is what an ESPN league shows its drafters by default, which is the
     reason it is worth having separately from a consensus ranking: it is not
-    another opinion, it is the behaviour of the room you are drafting against.
+    another opinion, it is the behavior of the room you are drafting against.
 
     The endpoint ignores the limit in the filter and returns every player, so
     the caller filters. Ranks are absent for players ESPN does not rank at all.

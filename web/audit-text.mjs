@@ -22,7 +22,7 @@ import { chromium } from "playwright";
 const PORT = process.env.PORT ?? "3000";
 
 const routes = ["/", "/scores", "/standings", "/playoffs", "/teams", "/teams/KC", "/stats",
-  "/war", "/separation", "/lab", "/market", "/tools/fourth-down", "/tools/armchair-gm",
+  "/war", "/separation", "/lab", "/visuals", "/snaps", "/market", "/tools/fourth-down", "/tools/armchair-gm",
   "/players/00-0033873", "/games/2025_22_SEA_NE", "/draft", "/fantasy",
   "/fantasy/draft", "/fantasy/week", "/fantasy/espn", "/week/2025/10", "/coaches", "/fantasy/league", "/glossary"];
 
@@ -66,7 +66,7 @@ for (const route of routes) {
       const kids = [...g.children].filter((c) => c.getBoundingClientRect().height > 0);
       if (kids.length < 2 || kids.length > 4) continue;
       // A sticky column follows the reader down, so its track is never read
-      // as empty however much taller its neighbour is.
+      // as empty however much taller its neighbor is.
       if (kids.some((c) => getComputedStyle(c).position === "sticky")) continue;
       const hs = kids.map((c) => Math.round(c.getBoundingClientRect().height));
       const gap = Math.max(...hs) - Math.min(...hs);

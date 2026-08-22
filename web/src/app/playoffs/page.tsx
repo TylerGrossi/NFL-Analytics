@@ -120,7 +120,7 @@ export default async function PlayoffsPage({
                   <thead>
                     <tr>
                       <th className="l">Team</th>
-                      <th>Exp W</th>
+                      <th>xWins</th>
                       <th>Div</th>
                       <th>Playoffs</th>
                       {[1, 2, 3, 4, 5, 6, 7].map((n) => (

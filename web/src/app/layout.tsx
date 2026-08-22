@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Brand, BrandMark } from "@/components/Brand";
 import { MainNav, MobileNav } from "@/components/MainNav";
@@ -18,7 +18,11 @@ const sans = Inter({
   display: "swap",
 });
 
-const mono = IBM_Plex_Mono({
+// Roboto Mono for figures, not Plex Mono. Plex draws a dotted zero as its
+// default glyph — not a feature that can be switched off — and a dot inside
+// every 0 is loud in a table that is mostly numbers. Roboto Mono's zero is
+// plain, and it keeps the tabular metrics the tables depend on.
+const mono = Roboto_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   variable: "--font-data",

@@ -104,7 +104,7 @@ export default async function MarketPage() {
                   <tbody>
                     {v.ats_by_edge.map((b) => {
                       const over = b.hit_rate >= v.breakeven;
-                      // Centre the bar on 50%; the breakeven tick sits just right of it.
+                      // Center the bar on 50%; the breakeven tick sits just right of it.
                       const span = (b.hit_rate - 0.5) * 100;
                       return (
                         <tr key={`${b.from}-${b.to}`}>

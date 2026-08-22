@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Deck, Empty, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Empty, PageHead, Panel, StatRow, StatTile, TeamMark } from "@/components/ui";
 import {
   getCoachBaseline,
   getCoachCareers,
@@ -56,11 +56,6 @@ export default async function CoachesPage({
       <PageHead>
         Coaches
       </PageHead>
-
-      <Deck>
-        Aggressiveness, pass tendency and predictability — followed across every club a coach has
-        led, not just his current one.
-      </Deck>
 
       <StatRow className="mb-5">
         <StatTile label="Coaches tracked" value={String(rows.length)} />

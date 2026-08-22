@@ -23,8 +23,8 @@ export default async function Image({ params }: { params: Promise<{ team: string
   const stats = [
     rec ? ogStat("Record", `${rec.w}–${rec.l}${rec.t ? `–${rec.t}` : ""}`) : null,
     row ? ogStat("Net EPA / play", signed(row.net_adj), row.net_adj >= 0 ? "pos" : "neg") : null,
-    row ? ogStat("Offence", ordinal(row.off_rank)) : null,
-    row ? ogStat("Defence", ordinal(row.def_rank)) : null,
+    row ? ogStat("Offense", ordinal(row.off_rank)) : null,
+    row ? ogStat("Defense", ordinal(row.def_rank)) : null,
   ].filter(Boolean) as React.ReactElement[];
 
   return new ImageResponse(

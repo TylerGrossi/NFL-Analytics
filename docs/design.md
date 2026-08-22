@@ -46,16 +46,16 @@ renders the numbers rather than a blank rectangle: `opengraph-image` routes exis
 `web/src/lib/og.tsx`.
 
 Two constraints shape them. **No club marks** — logos and headshots belong to the clubs and the NFL,
-so a card carries only team colours, abbreviations and figures we computed; the accent stripe does
-the work a crest would. And a club whose primary colour is navy would vanish into the card's navy
-footer, so the stripe falls back to the secondary colour when the primary is too dark to separate.
+so a card carries only team colors, abbreviations and figures we computed; the accent stripe does
+the work a crest would. And a club whose primary color is navy would vanish into the card's navy
+footer, so the stripe falls back to the secondary color when the primary is too dark to separate.
 
 Set `NEXT_PUBLIC_SITE_URL` in the deploy environment. Without it `metadataBase` falls back to
 localhost and the cards resolve to nothing off your machine.
 
 Signature charts also carry a **PNG button** on hover — the win probability chart, aging curves, the
 pick value curves and the player weekly chart. The charts are server-rendered SVG, so the export
-clones the node, resolves every CSS custom property to a literal (a serialised SVG has no document,
+clones the node, resolves every CSS custom property to a literal (a serialized SVG has no document,
 so `var(--c1)` renders black), paints the panel background, and draws to a 2× canvas with the
 Gridiron Analytics mark and a caption baked in. The team efficiency quadrant is deliberately excluded: it
 draws club logos with `<image href>` from a remote host, which taints the canvas.
@@ -66,7 +66,7 @@ Every page that shows one season at a time takes a `?season=` parameter and rend
 standings, teams, the team hub, player cards, the Lab and the fourth down page. Recent years are
 laid out in full and the rest collapse into a scrollable tail, because 27 equal chips swamps a page.
 
-Deep history surfaces gaps that a six-season window hid, and those are labelled rather than papered
+Deep history surfaces gaps that a six-season window hid, and those are labeled rather than papered
 over. Snap counts begin in 2012, so a 2007 team page shows "—" for snap share instead of 0%, and
 the defensive playing-time table explains that it cannot be built for that season rather than
 rendering empty.

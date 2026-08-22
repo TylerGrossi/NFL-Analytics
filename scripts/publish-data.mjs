@@ -58,7 +58,7 @@ function assetName(rel) {
   if (parts.length === 1) return parts[0];
   const [dir, file] = [parts[0], parts[parts.length - 1]];
   const season = file.match(/season=(\d{4})/)?.[1];
-  if (!season) throw new Error(`Cannot flatten an unrecognised partition: ${rel}`);
+  if (!season) throw new Error(`Cannot flatten an unrecognized partition: ${rel}`);
   return `${dir}_${season}.parquet`;
 }
 

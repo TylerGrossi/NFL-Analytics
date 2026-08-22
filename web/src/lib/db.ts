@@ -155,7 +155,7 @@ declare global {
  *
  * One connection cannot serve concurrent reads, but an instance can hand out
  * several that can. Remote reads are network-bound at ~145 ms each, so a page
- * firing six of them through `Promise.all` spent ~590 ms serialised and ~200 ms
+ * firing six of them through `Promise.all` spent ~590 ms serialized and ~200 ms
  * across a pool — measured against the live store. Four covers the widest
  * fan-out on the site without holding open connections nothing uses.
  */
@@ -237,7 +237,7 @@ function normalize(value: unknown): unknown {
 // waits for whichever frees up first.
 //
 // Off local disk that queueing was free, because queries were milliseconds.
-// Reading remote parquet they are ~145 ms apiece, so serialising the whole page
+// Reading remote parquet they are ~145 ms apiece, so serializing the whole page
 // onto one connection made every fan-out additive. Call sites are unchanged and
 // still use Promise.all; the pool is what makes that actually concurrent.
 const idle: DuckDBConnection[] = [];

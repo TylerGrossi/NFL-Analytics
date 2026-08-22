@@ -1,5 +1,5 @@
 import { FourthDownCalculator } from "@/components/FourthDownCalculator";
-import { Deck, Panel, PageHead, SectionRule, TeamMark, StatTile } from "@/components/ui";
+import { Panel, PageHead, SectionRule, TeamMark, StatTile } from "@/components/ui";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
   getBuiltSeasons,
@@ -8,7 +8,7 @@ import {
   getTeamMap,
   getWorstFourthDowns,
 } from "@/lib/queries";
-import { int, num, pct } from "@/lib/format";
+import { fourthCall, int, num, pct } from "@/lib/format";
 
 export const metadata = { title: "Fourth down" };
 export const revalidate = 300;
@@ -47,10 +47,6 @@ export default async function FourthDownPage({
   return (
     <>
       <PageHead>Fourth down</PageHead>
-
-      <Deck>
-        Go, kick or punt — each priced in the same currency, the chance the team in possession wins.
-      </Deck>
 
       <FourthDownCalculator />
 
@@ -157,11 +153,11 @@ export default async function FourthDownPage({
                       <td className="l text-[12px] text-ink-2">
                         4th &amp; {String(w.ydstogo)} ·{" "}
                         {Number(w.yardline_100) > 50
-                          ? `own ${100 - Number(w.yardline_100)}`
-                          : `opp ${w.yardline_100}`}
+                          ? `Own ${100 - Number(w.yardline_100)}`
+                          : `Opp ${w.yardline_100}`}
                       </td>
-                      <td className="l text-[12px] num text-ink-2">{String(w.choice)}</td>
-                      <td className="l text-[12px] num font-semibold">{String(w.best)}</td>
+                      <td className="l text-[12px] num text-ink-2">{fourthCall(w.choice as string)}</td>
+                      <td className="l text-[12px] num font-semibold">{fourthCall(w.best as string)}</td>
                       <td className="num text-neg font-semibold">{num(Number(w.wp_lost), 1)}</td>
                     </tr>
                   ))}

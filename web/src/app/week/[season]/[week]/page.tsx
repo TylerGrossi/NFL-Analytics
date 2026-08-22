@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Deck, Empty, Panel, PageHead, TeamMark } from "@/components/ui";
+import { Empty, Panel, PageHead, TeamMark } from "@/components/ui";
+import { WeekNav } from "@/components/WeekNav";
 import {
+  getGames,
   getPlayedWeeks,
   getTeamMap,
   getWeekBigPlays,
@@ -44,7 +46,8 @@ export default async function WeekPage({
   const weeks = await getPlayedWeeks();
   if (!weeks.some((w) => w.season === season && w.week === week)) notFound();
 
-  const [plays, swings, misses, upsets, players, teams] = await Promise.all([
+  const [games, plays, swings, misses, upsets, players, teams] = await Promise.all([
+    getGames(season, week),
     getWeekBigPlays(season, week, 10),
     getWeekTeamSwings(season, week),
     getWeekFourthMisses(season, week, 8),
@@ -56,6 +59,12 @@ export default async function WeekPage({
   const idx = weeks.findIndex((w) => w.season === season && w.week === week);
   const newer = idx > 0 ? weeks[idx - 1] : null;
   const older = idx >= 0 && idx < weeks.length - 1 ? weeks[idx + 1] : null;
+
+  const seasonList = [...new Set(weeks.map((w) => w.season))];
+  const weekList = weeks
+    .filter((w) => w.season === season)
+    .map((w) => ({ week: w.week, label: weekLabel(w.week) }))
+    .sort((a, b) => a.week - b.week);
 
   const best = swings.slice(0, 5);
   const worst = swings.slice(Math.max(best.length, swings.length - 5)).reverse();
@@ -81,10 +90,55 @@ export default async function WeekPage({
         {weekLabel(week)} · {season}
       </PageHead>
 
-      <Deck>
-        What actually moved — the biggest swings, the worst decisions, and the results the market
-        did not see coming.
-      </Deck>
+      <div className="mb-4">
+        <WeekNav
+          seasons={seasonList}
+          weeks={weekList}
+          season={season}
+          week={week}
+        />
+      </div>
+
+      {/* The results, first. A page about a week that never says what happened
+          in it sends the reader somewhere else to find out. */}
+      {games.length > 0 && (
+        <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(210px,1fr))] mb-5">
+          {games.map((g) => {
+            const awayWon = (g.away_score ?? 0) > (g.home_score ?? 0);
+            const homeWon = (g.home_score ?? 0) > (g.away_score ?? 0);
+            return (
+              <Link
+                key={g.game_id}
+                href={`/games/${g.game_id}`}
+                className="panel px-3 py-2 no-underline hover:border-rule-strong transition-colors"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <TeamMark
+                    team={g.away_team}
+                    logo={teams[g.away_team]?.logo}
+                    size={17}
+                    name={teams[g.away_team]?.nick ?? g.away_team}
+                  />
+                  <span className={`num text-[14px] ${awayWon ? "font-semibold text-ink" : "text-ink-3"}`}>
+                    {g.away_score ?? "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <TeamMark
+                    team={g.home_team}
+                    logo={teams[g.home_team]?.logo}
+                    size={17}
+                    name={teams[g.home_team]?.nick ?? g.home_team}
+                  />
+                  <span className={`num text-[14px] ${homeWon ? "font-semibold text-ink" : "text-ink-3"}`}>
+                    {g.home_score ?? "—"}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2 items-start">
         <Panel title="Biggest plays">
@@ -113,9 +167,12 @@ export default async function WeekPage({
                           showAbbr={false}
                         />
                       </td>
+                      {/* Wrapped, not truncated. `.grid-table td` is nowrap, so
+                          a long play was cut mid-sentence and the interesting
+                          half — who did what to whom — was the half removed. */}
                       <td
-                        className="l text-[11.5px] text-ink-2 max-w-[360px] truncate"
-                        title={pl.desc}
+                        className="l text-[11.5px] text-ink-2 whitespace-normal leading-snug"
+                        style={{ minWidth: 300 }}
                       >
                         <Link href={`/games/${pl.game_id}`} className="link-cell">
                           {pl.desc}
@@ -234,12 +291,8 @@ export default async function WeekPage({
         </Panel>
 
         <div className="flex flex-col gap-4">
-          <Panel
-            title="Costliest fourth downs"
-          >
-            {misses.length === 0 ? (
-              <Empty>Every fourth down this week matched the model.</Empty>
-            ) : (
+          {misses.length > 0 && (
+            <Panel title="Costliest fourth downs">
               <div className="scroll-x">
                 <table className="grid-table">
                   <thead>
@@ -278,8 +331,8 @@ export default async function WeekPage({
                   </tbody>
                 </table>
               </div>
-            )}
-          </Panel>
+            </Panel>
+          )}
 
           {upsets.length > 0 && (
             <Panel title="What the market missed">

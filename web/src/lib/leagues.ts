@@ -4,7 +4,7 @@ import { ESPN_USER_AGENT } from "./espn";
 /**
  * Reading a real fantasy league off Sleeper or ESPN.
  *
- * Both are read at request time and normalised to one shape, so every tool
+ * Both are read at request time and normalized to one shape, so every tool
  * downstream is written once. Neither is stored: a league id in the URL is the
  * whole of the state, which means no accounts, no database, and nothing of the
  * user's to leak.

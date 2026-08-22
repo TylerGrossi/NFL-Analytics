@@ -17,7 +17,7 @@ export const revalidate = 900;
 
 const POSITIONS = ["ALL", "QB", "RB", "WR", "TE"];
 
-/** Rank 1 is the most generous defence, so a low rank is a good draw. */
+/** Rank 1 is the most generous defense, so a low rank is a good draw. */
 function matchupTone(rank: number | null): string | undefined {
   if (rank === null) return undefined;
   if (rank <= 8) return "var(--pos)";

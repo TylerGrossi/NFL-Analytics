@@ -22,7 +22,7 @@ export default async function ArmchairGmPage({
   const sp = await searchParams;
   const manifest = await getManifest();
   const season = manifest.scheduled_season;
-  const warSeason = manifest.stats_season;
+  const epaSeason = manifest.stats_season;
 
   const [summary, teams] = await Promise.all([getCapSummary(season), getTeamMap()]);
   // Default to the fullest sheet; the emptiest one is just a team whose
@@ -33,9 +33,9 @@ export default async function ArmchairGmPage({
   const teamSummary = summary.find((s) => s.team === team);
 
   const [rows, surplus, depth] = await Promise.all([
-    getCapTable(team, season, warSeason),
-    getSurplusValue(season, warSeason, 15),
-    getTeamDepth(team, season, warSeason),
+    getCapTable(team, season, epaSeason),
+    getSurplusValue(season, epaSeason, 15),
+    getTeamDepth(team, season, epaSeason),
   ]);
 
   return (
@@ -74,7 +74,7 @@ export default async function ArmchairGmPage({
           capLimit={teamSummary?.cap_limit ?? 0}
           team={teams[team]?.nick ?? team}
           season={season}
-          warSeason={warSeason}
+          epaSeason={epaSeason}
         />
       )}
 
@@ -88,8 +88,8 @@ export default async function ArmchairGmPage({
                   <th className="l">Pos</th>
                   <th className="l">Tm</th>
                   <th>Cap hit</th>
-                  <th>PAR</th>
-                  <th>PAR/$10M</th>
+                  <th>EPA</th>
+                  <th>EPA/$10M</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,9 +107,9 @@ export default async function ArmchairGmPage({
                       />
                     </td>
                     <td className="num text-ink-2">${num(Number(s.cap_hit), 1)}M</td>
-                    <td className="num text-ink-2">{num(Number(s.par), 0)}</td>
+                    <td className="num text-ink-2">{num(Number(s.epa), 0)}</td>
                     <td className="num font-semibold text-pos">
-                      {num(Number(s.par_per_million) * 10, 1)}
+                      {num(Number(s.epa_per_million) * 10, 1)}
                     </td>
                   </tr>
                 ))}

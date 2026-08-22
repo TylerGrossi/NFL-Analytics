@@ -52,14 +52,14 @@ export function ArmchairGM({
   capLimit,
   team,
   season,
-  warSeason,
+  epaSeason,
 }: {
   rows: CapRow[];
   depth: DepthChartRow[];
   capLimit: number;
   team: string;
   season: number;
-  warSeason: number;
+  epaSeason: number;
 }) {
   const [moves, setMoves] = useState<Record<string, Move>>({});
   const [sort, setSort] = useState<"cap" | "value" | "savings">("cap");
@@ -72,10 +72,10 @@ export function ArmchairGM({
   );
   const key = (r: CapRow) => keys.get(r) ?? `${r.player_id ?? r.player}`;
 
-  const { committed, dead, totalPar, freed, cutIds, startersCut } = useMemo(() => {
+  const { committed, dead, totalEpa, freed, cutIds, startersCut } = useMemo(() => {
     let committed = 0;
     let dead = 0;
-    let totalPar = 0;
+    let totalEpa = 0;
     let freed = 0;
     let startersCut = 0;
     const cutIds = new Set<string>();
@@ -90,13 +90,13 @@ export function ArmchairGM({
       } else if (move === "restructure") {
         committed += r.cap_hit - r.restructure_savings;
         freed += r.restructure_savings;
-        totalPar += r.par ?? 0;
+        totalEpa += r.epa ?? 0;
       } else {
         committed += r.cap_hit;
-        totalPar += r.par ?? 0;
+        totalEpa += r.epa ?? 0;
       }
     });
-    return { committed, dead, totalPar, freed, cutIds, startersCut };
+    return { committed, dead, totalEpa, freed, cutIds, startersCut };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moves, rows, keys]);
 
@@ -107,7 +107,7 @@ export function ArmchairGM({
     if (sort === "value") {
       copy.sort(
         (a, b) =>
-          (b.par ?? -999) / Math.max(b.cap_hit, 1) - (a.par ?? -999) / Math.max(a.cap_hit, 1)
+          (b.epa ?? -999) / Math.max(b.cap_hit, 1) - (a.epa ?? -999) / Math.max(a.cap_hit, 1)
       );
     } else if (sort === "savings") {
       copy.sort((a, b) => b.cut_savings - a.cut_savings);
@@ -132,12 +132,12 @@ export function ArmchairGM({
         <Tile label="Dead money" value={money(dead)} />
         <Tile label="Freed" value={money(freed)} />
         <Tile
-          label="Roster PAR"
-          value={totalPar.toFixed(0)}
+          label="Roster EPA"
+          value={totalEpa.toFixed(0)}
         />
         <Tile
-          label="PAR per $10M"
-          value={committed > 0 ? ((totalPar / committed) * 10).toFixed(1) : "—"}
+          label="EPA per $10M"
+          value={committed > 0 ? ((totalEpa / committed) * 10).toFixed(1) : "—"}
         />
         {depth.length > 0 && (
           <Tile
@@ -192,8 +192,8 @@ export function ArmchairGM({
                 <th>Dead if cut</th>
                 <th>Cut saves</th>
                 <th>Restr. saves</th>
-                <th>PAR</th>
-                <th>PAR/$10M</th>
+                <th>EPA</th>
+                <th>EPA/$10M</th>
                 <th className="l">Move</th>
               </tr>
             </thead>
@@ -201,7 +201,7 @@ export function ArmchairGM({
               {sorted.map((r) => {
                 const k = key(r);
                 const move = moves[k] ?? "keep";
-                const perTen = r.par !== null && r.cap_hit > 0 ? (r.par / r.cap_hit) * 10 : null;
+                const perTen = r.epa !== null && r.cap_hit > 0 ? (r.epa / r.cap_hit) * 10 : null;
                 const chip = injuryChip(r.status, r.p_play);
                 return (
                   <tr key={k} style={move === "cut" ? { opacity: 0.5 } : undefined}>
@@ -255,7 +255,7 @@ export function ArmchairGM({
                     <td className="num text-ink-2">
                       {r.restructure_savings > 0.05 ? money(r.restructure_savings) : "—"}
                     </td>
-                    <td className="num text-ink-2">{r.par !== null ? r.par.toFixed(0) : "—"}</td>
+                    <td className="num text-ink-2">{r.epa !== null ? r.epa.toFixed(0) : "—"}</td>
                     <td
                       className="num"
                       style={{
@@ -297,7 +297,7 @@ export function ArmchairGM({
         </div>
       </div>
 
-      {depth.length > 0 && <DepthBoard depth={depth} cutIds={cutIds} warSeason={warSeason} />}
+      {depth.length > 0 && <DepthBoard depth={depth} cutIds={cutIds} epaSeason={epaSeason} />}
 
       <style>{`
         .btn-move {
@@ -335,11 +335,11 @@ export function ArmchairGM({
 function DepthBoard({
   depth,
   cutIds,
-  warSeason,
+  epaSeason,
 }: {
   depth: DepthChartRow[];
   cutIds: Set<string>;
-  warSeason: number;
+  epaSeason: number;
 }) {
   const asOf = depth[0]?.depth_as_of?.slice(0, 10) ?? null;
 
@@ -371,11 +371,11 @@ function DepthBoard({
       const next = list.find((r) => !cutIds.has(r.player_id)) ?? null;
       out.push({ pos, lost: starter, next });
     }
-    return out.sort((a, b) => (b.lost.par ?? 0) - (a.lost.par ?? 0));
+    return out.sort((a, b) => (b.lost.epa ?? 0) - (a.lost.epa ?? 0));
   }, [byPos, cutIds]);
 
-  const parLost = holes.reduce(
-    (sum, h) => sum + ((h.lost.par ?? 0) - (h.next?.par ?? 0)),
+  const epaLost = holes.reduce(
+    (sum, h) => sum + ((h.lost.epa ?? 0) - (h.next?.epa ?? 0)),
     0
   );
 
@@ -384,7 +384,7 @@ function DepthBoard({
       <div className="panel-head">
         <h3>Depth chart</h3>
         <span className="text-[11px] text-ink-3">
-          {asOf ? `as of ${asOf}` : "latest published"} · PAR from {warSeason}
+          {asOf ? `as of ${asOf}` : "latest published"} · EPA from {epaSeason}
         </span>
       </div>
 
@@ -392,9 +392,9 @@ function DepthBoard({
         <div className="px-4 py-3 border-b border-rule">
           <div className="label mb-1.5">
             {holes.length} starting {holes.length === 1 ? "job" : "jobs"} opened ·{" "}
-            <span style={{ color: parLost > 0 ? "var(--neg)" : "var(--pos)" }}>
-              {parLost > 0 ? "−" : "+"}
-              {Math.abs(parLost).toFixed(0)} PAR
+            <span style={{ color: epaLost > 0 ? "var(--neg)" : "var(--pos)" }}>
+              {epaLost > 0 ? "−" : "+"}
+              {Math.abs(epaLost).toFixed(0)} EPA
             </span>{" "}
             against the next man up
           </div>
@@ -405,8 +405,8 @@ function DepthBoard({
                 <span className="line-through text-ink-3">{h.lost.name ?? "—"}</span>{" "}
                 <span className="text-ink-3">→</span>{" "}
                 <span className="font-medium">{h.next?.name ?? "nobody"}</span>
-                {h.next?.par !== null && h.next?.par !== undefined && (
-                  <span className="text-ink-3"> ({h.next.par.toFixed(0)})</span>
+                {h.next?.epa !== null && h.next?.epa !== undefined && (
+                  <span className="text-ink-3"> ({h.next.epa.toFixed(0)})</span>
                 )}
               </span>
             ))}
@@ -486,7 +486,7 @@ function PositionCard({
                 )}
               </span>
               <span className="num text-ink-3 shrink-0">
-                {r.par !== null ? r.par.toFixed(0) : "—"}
+                {r.epa !== null ? r.epa.toFixed(0) : "—"}
               </span>
             </li>
           );

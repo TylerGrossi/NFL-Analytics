@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import { AgingCurve } from "@/components/AgingCurve";
-import { ChartExport } from "@/components/ChartExport";
 import { LineChart } from "@/components/LineChart";
 import { Empty, Notes, Panel, PercentileBar, SectionRule, StatTile, TeamMark } from "@/components/ui";
 import {
@@ -9,17 +9,15 @@ import {
   getManifest,
   getPlayerBio,
   getPlayerCareer,
-  getPlayerCareerWar,
+  getPlayerCareerEpa,
   getPlayerGameLog,
   getPlayerSeason,
-  getPlayerWar,
   getTeamMap,
 } from "@/lib/queries";
 import { age, height, int, num, pct, pts, signed } from "@/lib/format";
 
 export const revalidate = 300;
 
-/** Which stat rows a card shows is driven by what the player actually did. */
 /**
  * `pct` takes a fraction and `pts` a signed 0–100 figure. Two of the Next Gen
  * columns are neither: aggressiveness and share of intended air yards arrive
@@ -29,74 +27,100 @@ export const revalidate = 300;
 type Kind = "signed" | "pct" | "int" | "num" | "num1" | "pts" | "pctpts";
 
 /**
- * A percentile row carries its own figure. A rank on its own says where a player
- * sits without saying what he did — 74th at what? — so every row names the stat,
- * plots the rank and prints the value. The raw column is the percentile column
- * without its `pct_` prefix; the pair exists for all sixteen.
+ * Positions expected points can price at all.
+ *
+ * EPA is charged to the man who touched the ball, so a dropback, a carry and a
+ * target are the whole of it. Linemen and defenders are not absent because they
+ * do not matter — they are absent because this stat has nothing to say about
+ * them, and their cards fall back to the charted production below.
  */
-const PROFILES: Record<
-  string,
-  { tiles: [string, string, Kind][]; percentiles: [string, string, Kind][] }
-> = {
-  QB: {
-    tiles: [
-      ["dropbacks", "Dropbacks", "int"],
-      ["epa_per_db", "EPA / dropback", "signed"],
-      ["cpoe", "CPOE", "pts"],
-      ["play_success", "Success rate", "pct"],
-      ["passing_yards", "Pass yards", "int"],
-      ["passing_tds", "TD", "int"],
-    ],
-    percentiles: [
-      ["pct_epa_per_db", "EPA per dropback", "signed"],
-      ["pct_cpoe", "Completion % over expected", "pts"],
-      ["pct_play_success", "Success rate", "pct"],
-      ["pct_sack_rate", "Sack avoidance", "pct"],
-      ["pct_passing_yards", "Passing volume", "int"],
-      ["pct_passing_tds", "Touchdowns", "int"],
-    ],
-  },
-  RB: {
-    tiles: [
-      ["carries", "Carries", "int"],
-      ["epa_per_rush", "EPA / rush", "signed"],
-      ["yards_per_carry", "Yards / carry", "num"],
-      ["rush_success", "Success rate", "pct"],
-      ["rushing_yards", "Rush yards", "int"],
-      ["receiving_yards", "Rec yards", "int"],
-    ],
-    percentiles: [
-      ["pct_epa_per_rush", "EPA per rush", "signed"],
-      ["pct_play_success", "Success rate", "pct"],
-      ["pct_yards_per_carry", "Yards per carry", "num"],
-      ["pct_rushing_yards", "Rushing volume", "int"],
-      ["pct_receiving_epa", "Receiving value", "signed"],
-      ["pct_yprr", "Yards per route run", "num"],
-    ],
-  },
-  WR: {
-    tiles: [
-      ["targets", "Targets", "int"],
-      ["epa_per_target", "EPA / target", "signed"],
-      ["receptions", "Receptions", "int"],
-      ["receiving_yards", "Rec yards", "int"],
-      ["avg_separation", "Separation", "num"],
-      ["wopr", "WOPR", "num"],
-    ],
-    percentiles: [
-      ["pct_yprr", "Yards per route run", "num"],
-      ["pct_epa_per_target", "EPA per target", "signed"],
-      ["pct_tprr", "Targets per route run", "num"],
-      ["pct_play_success", "Success rate", "pct"],
-      ["pct_receiving_yards", "Receiving volume", "int"],
-      ["pct_wopr", "Opportunity share (WOPR)", "num"],
-      ["pct_avg_separation", "Average separation", "num"],
-      ["pct_avg_yac_above_expectation", "YAC over expected", "num"],
-    ],
-  },
+const SKILL = new Set(["QB", "RB", "FB", "WR", "TE"]);
+
+/**
+ * Roster status, as the feed spells it against what it means.
+ *
+ * These arrive as three-letter codes — ACT, DEV, RES — which are unambiguous
+ * to the source and opaque to everyone else. Anything not listed falls back to
+ * the raw code rather than to nothing, so a new code shows up as a puzzle
+ * rather than as a blank line.
+ */
+const STATUS: Record<string, string> = {
+  ACT: "Active",
+  DEV: "Practice squad",
+  RES: "Injured reserve",
+  PUP: "Physically unable to perform",
+  RSR: "Reserve / retired",
+  RSN: "Reserve / non-football injury",
+  NWT: "Not with a team",
+  CUT: "Free agent",
+  RLS: "Released",
+  SUS: "Suspended",
 };
-PROFILES.TE = PROFILES.WR;
-PROFILES.FB = PROFILES.RB;
+
+/**
+ * The season-and-career strip under the header.
+ *
+ * This replaced a row of six tiles. Every figure in those tiles now appears in
+ * the Profile below with a rank beside it, so the tiles were repeating the page
+ * back to itself; a career line next to the season line is the one thing the
+ * card could not say before.
+ */
+const TOTALS: Record<string, [label: string, column: string, kind: Kind][]> = {
+  QB: [
+    ["G", "games", "int"],
+    ["Cmp", "completions", "int"],
+    ["Att", "attempts", "int"],
+    ["Yds", "passing_yards", "int"],
+    ["TD", "passing_tds", "int"],
+    ["INT", "passing_interceptions", "int"],
+    ["Rush yds", "rushing_yards", "int"],
+  ],
+  WR: [
+    ["G", "games", "int"],
+    ["Tgt", "targets", "int"],
+    ["Rec", "receptions", "int"],
+    ["Yds", "receiving_yards", "int"],
+    ["TD", "receiving_tds", "int"],
+    ["EPA", "total_epa", "num1"],
+  ],
+  RB: [
+    ["G", "games", "int"],
+    ["Att", "carries", "int"],
+    ["Rush yds", "rushing_yards", "int"],
+    ["TD", "rushing_tds", "int"],
+    ["Rec", "receptions", "int"],
+    ["Rec yds", "receiving_yards", "int"],
+  ],
+};
+TOTALS.TE = TOTALS.WR;
+TOTALS.FB = TOTALS.RB;
+
+/**
+ * The career table's columns when the position has no totals set of its own —
+ * a lineman, a kicker, a defender whose season line is charted rather than
+ * counted. Games and the three yardage columns are the least wrong thing to
+ * show a reader who came looking for a career.
+ */
+const CAREER_FALLBACK: [string, string, Kind][] = [
+  ["G", "games", "int"],
+  ["Pass yds", "passing_yards", "int"],
+  ["Rush yds", "rushing_yards", "int"],
+  ["Rec yds", "receiving_yards", "int"],
+];
+
+const DEF_TOTALS: [string, string, Kind][] = [
+  ["G", "games", "int"],
+  ["Snaps", "def_snaps", "int"],
+  ["Tkl", "def_tackles_combined", "int"],
+  ["TFL", "def_tackles_for_loss", "int"],
+  ["Sacks", "def_sacks", "num1"],
+  ["Prss", "def_pressures", "int"],
+  ["INT", "def_interceptions", "int"],
+  ["PD", "def_pass_defended", "int"],
+];
+for (const pos of ["CB", "SAF", "FS", "S", "SS", "DB", "LB", "OLB", "ILB", "MLB", "DE", "DT", "NT", "DL"]) {
+  TOTALS[pos] = DEF_TOTALS;
+}
 
 const DEFENSE: [string, string, "int" | "num"][] = [
   ["def_snaps", "Snaps", "int"],
@@ -127,75 +151,90 @@ function fmt(value: unknown, kind: string): string {
   }
 }
 
-/** A stat that is a ratio of two stored columns rather than a column of its own. */
-function ratio(a: unknown, b: unknown): number | null {
-  const x = Number(a);
-  const y = Number(b);
-  return Number.isFinite(x) && Number.isFinite(y) && y > 0 ? x / y : null;
-}
-
-type Row = [label: string, value: unknown, kind: Kind];
+/**
+ * A row names the column it came from, so the card can find that column's
+ * percentile — `pct_<column>` — without a second table mapping one to the other.
+ * A literal number is a figure the store does not keep (a ratio computed here);
+ * it has no rank and so draws no bar.
+ */
+type Source = string | number | null;
+type Row = [label: string, source: Source, kind: Kind];
 type Group = { title: string; rows: Row[] };
 
 /**
  * The detail groups under the card, per position.
  *
- * Built from the season row rather than declared as column names, because
- * several of the useful figures — completion rate, yards per attempt, catch
- * rate — are ratios the store does not keep. Groups whose volume is zero are
- * dropped by the caller: a quarterback's receiving columns hold junk from the
- * odd trick play (a −8 aDOT on one target) and are worse than showing nothing.
+ * Groups whose volume is zero are dropped by the caller: a quarterback's
+ * receiving columns hold junk from the odd trick play (a -8 aDOT on one target)
+ * and are worse than showing nothing.
  */
+const DEF_POSITIONS = new Set([
+  "CB", "SAF", "FS", "S", "SS", "DB", "LB", "OLB", "ILB", "MLB",
+  "DE", "DT", "NT", "DL",
+]);
+
 function detailGroups(line: Record<string, unknown>, position: string): Group[] {
   const g: Group[] = [];
   const isQB = position === "QB";
   const isRB = position === "RB" || position === "FB";
+  const isReceiver = position === "WR" || position === "TE";
   const carries = Number(line.carries ?? 0);
   const targets = Number(line.targets ?? 0);
+
+  // Value first, because it is the thing the card is now about. Expected points
+  // added is the site's headline figure; the phase rows underneath say where it
+  // came from, and only appear for a phase the player actually played.
+  if (SKILL.has(position)) {
+    g.push({
+      title: "Value",
+      rows: [
+        ["Total EPA", "total_epa", "num1"],
+        ...(isQB ? ([["Passing EPA", "passing_epa", "num1"]] as Row[]) : []),
+        // A receiver's total EPA *is* his receiving EPA to within a jet
+        // sweep, so the phase rows would print the headline number three
+        // times over. Backs and quarterbacks genuinely split and keep theirs;
+        // a quarterback's receiving line is one trick play and is never shown.
+        ...(isReceiver
+          ? []
+          : [
+              ...(carries > 0
+                ? ([["Rushing EPA", "rushing_epa", "num1"]] as Row[])
+                : []),
+              ...(!isQB && targets > 0
+                ? ([["Receiving EPA", "receiving_epa", "num1"]] as Row[])
+                : []),
+            ]),
+        ...(isQB
+          ? ([["EPA per dropback", "epa_per_db", "signed"]] as Row[])
+          : isRB
+            ? ([["EPA per rush", "epa_per_rush", "signed"]] as Row[])
+            : ([["EPA per target", "epa_per_target", "signed"]] as Row[])),
+      ],
+    });
+  }
 
   if (isQB) {
     g.push({
       title: "Passing",
       rows: [
-        ["Completions", line.completions, "int"],
-        ["Attempts", line.attempts, "int"],
-        ["Completion rate", ratio(line.completions, line.attempts), "pct"],
-        ["Yards", line.passing_yards, "int"],
-        ["Yards per attempt", ratio(line.passing_yards, line.attempts), "num"],
-        ["Touchdowns", line.passing_tds, "int"],
-        ["Interceptions", line.passing_interceptions, "int"],
-        ["First downs", line.passing_first_downs, "int"],
-        ["Air yards", line.passing_air_yards, "int"],
-        ["Yards after catch", line.passing_yards_after_catch, "int"],
-        ["20+ yard gains", line.passing_20, "int"],
-        ["40+ yard gains", line.passing_40, "int"],
-      ],
-    });
-    g.push({
-      title: "Pocket",
-      rows: [
-        ["Sacks taken", line.sacks_suffered, "int"],
-        ["Sack rate", line.sack_rate, "pct"],
-        // Stored negative; the label already carries the direction, and `int`
-        // would render it with a hyphen rather than the site's true minus.
-        ["Yards lost", Math.abs(Number(line.sack_yards_lost ?? 0)), "int"],
-        ["Time to throw", line.avg_time_to_throw, "num"],
-        ["Aggressiveness", line.aggressiveness, "pctpts"],
-        ["Intended air yards", line.adot, "num1"],
-        ["Completed air yards", line.avg_completed_air_yards, "num1"],
-        ["PACR", line.pacr, "num"],
+        ["Completions", "completions", "int"],
+        ["Attempts", "attempts", "int"],
+        ["Completion rate", "completion_pct", "pct"],
+        ["Yards", "passing_yards", "int"],
+        ["Yards per attempt", "yards_per_attempt", "num"],
+        ["Touchdowns", "passing_tds", "int"],
+        ["Interceptions", "passing_interceptions", "int"],
       ],
     });
     g.push({
       title: "Efficiency",
       rows: [
-        ["EPA per dropback", line.epa_per_db, "signed"],
-        ["Total QB EPA", line.total_qb_epa, "num1"],
-        ["Success rate", line.play_success, "pct"],
-        ["CPOE", line.cpoe, "pts"],
-        ["Deep EPA", line.deep_epa, "signed"],
-        ["Third-down EPA", line.third_epa, "signed"],
-        ["Win probability added", line.wpa, "signed"],
+        ["CPOE", "cpoe", "pts"],
+        ["Passer rating", "passer_rating", "num1"],
+        ["Deep EPA", "deep_epa", "signed"],
+        ["Third-down EPA", "third_epa", "signed"],
+        ["Sacks taken", "sacks_suffered", "int"],
+        ["Sack rate", "sack_rate", "pct"],
       ],
     });
   }
@@ -204,16 +243,25 @@ function detailGroups(line: Record<string, unknown>, position: string): Group[] 
     g.push({
       title: "Rushing",
       rows: [
-        ["Carries", line.carries, "int"],
-        ["Yards", line.rushing_yards, "int"],
-        ["Yards per carry", line.yards_per_carry, "num"],
-        ["Touchdowns", line.rushing_tds, "int"],
-        ["First downs", line.rushing_first_downs, "int"],
-        ["EPA per rush", line.epa_per_rush, "signed"],
-        ["Success rate", line.rush_success, "pct"],
-        ["Explosive rate", line.explosive_rush_rate, "pct"],
-        ["Stuffed rate", line.stuff_rate, "pct"],
-        ["Yards over expected", line.rush_yards_over_expected_per_att, "signed"],
+        ...(isQB
+          ? []
+          : ([["Carries", "carries", "int"]] as Row[])),
+        ["Yards", "rushing_yards", "int"],
+        ...(isQB
+          ? []
+          : ([["Yards per carry", "yards_per_carry", "num"]] as Row[])),
+        ["Touchdowns", "rushing_tds", "int"],
+        ...(isQB
+          ? []
+          : ([
+              ["First downs", "rushing_first_downs", "int"],
+              ["Success rate", "rush_success", "pct"],
+              ["Explosive rate", "explosive_rush_rate", "pct"],
+              ["Stuffed rate", "stuff_rate", "pct"],
+            ] as Row[])),
+        ["Yards over expected", "rush_yards_over_expected_per_att", "signed"],
+        ["Total yards over expected", "rush_yards_over_expected", "num1"],
+        ["Runs over expected", "rush_pct_over_expected", "pctpts"],
       ],
     });
   }
@@ -222,77 +270,155 @@ function detailGroups(line: Record<string, unknown>, position: string): Group[] 
     g.push({
       title: "Receiving",
       rows: [
-        ["Targets", line.targets, "int"],
-        ["Receptions", line.receptions, "int"],
-        ["Catch rate", ratio(line.receptions, line.targets), "pct"],
-        ["Yards", line.receiving_yards, "int"],
-        ["Yards per target", line.yards_per_target, "num"],
-        ["Yards per reception", ratio(line.receiving_yards, line.receptions), "num"],
-        ["Touchdowns", line.receiving_tds, "int"],
-        ["First downs", line.receiving_first_downs, "int"],
-        ["Air yards", line.receiving_air_yards, "int"],
-        ["YAC per reception", line.yac_per_rec, "num"],
-        ["20+ yard gains", line.receiving_20, "int"],
-        ["40+ yard gains", line.receiving_40, "int"],
+        ["Targets", "targets", "int"],
+        ["Receptions", "receptions", "int"],
+        ["Catch rate", "catch_pct", "pct"],
+        ["Yards", "receiving_yards", "int"],
+        ["Yards per reception", "yards_per_rec", "num"],
+        ["Touchdowns", "receiving_tds", "int"],
+        ["First downs", "receiving_first_downs", "int"],
+        // Off a receiver's card: yards per target is yards and catch rate
+        // multiplied together, and the last two are volume the target count
+        // above already carries.
+        ...(isReceiver
+          ? []
+          : ([
+              ["Yards per target", "yards_per_target", "num"],
+              ["20+ yard gains", "receiving_20", "int"],
+              ["Air yards", "receiving_air_yards", "int"],
+            ] as Row[])),
       ],
     });
     // The air-yards family only means anything for a player running routes. A
     // back with 31 air yards on 50 targets posts a RACR of 8.8, which is an
-    // artefact of the divisor rather than a receiving profile.
+    // artifact of the divisor rather than a receiving profile.
     const routeRunner = !isRB;
     g.push({
       title: "Opportunity",
       rows: [
-        ["Routes run", line.routes, "int"],
-        ["Yards per route run", line.yprr, "num"],
-        ["Targets per route run", line.tprr, "num"],
-        ["Target share", line.target_share, "pct"],
-        ["WOPR", line.wopr, "num"],
-        ["Average depth of target", line.rec_adot, "num1"],
-        ["EPA per target", line.epa_per_target, "signed"],
-        ["Success rate", line.rec_success, "pct"],
-        ["Total EPA", line.total_epa, "num1"],
+        ["Routes run", "routes", "int"],
+        ["YPRR", "yprr", "num"],
+        // Off a receiver's card: targets per route run, target share and
+        // air-yards share are three ways of saying how much of the offense
+        // ran through him, and YPRR above already prices what a route was
+        // worth.
+        ...(isReceiver
+          ? []
+          : ([
+              ["Targets per route run", "tprr", "num"],
+              ["Target share", "target_share", "pct"],
+              ["Success rate", "rec_success", "pct"],
+            ] as Row[])),
         ...(routeRunner
           ? ([
-              ["Air yards share", line.air_yards_share, "pct"],
-              ["RACR", line.racr, "num"],
+              ...(isReceiver
+                ? []
+                : ([["Air yards share", "air_yards_share", "pct"]] as Row[])),
+              ["Average separation", "avg_separation", "num"],
+              ["YAC over expected", "avg_yac_above_expectation", "signed"],
             ] as Row[])
           : []),
       ],
     });
-    if (routeRunner) {
-      g.push({
-        title: "Route & catch",
-        rows: [
-          ["Average separation", line.avg_separation, "num"],
-          ["Average cushion", line.avg_cushion, "num"],
-          ["YAC over expected", line.avg_yac_above_expectation, "signed"],
-          ["Intended air yards", line.avg_intended_air_yards, "num1"],
-          ["Share of intended air", line.percent_share_of_intended_air_yards, "pctpts"],
-        ],
-      });
-    }
   }
 
-  g.push({
+  if (DEF_POSITIONS.has(position) && Number(line.def_snaps ?? 0) > 0) {
+    g.push({
+      title: "Pass rush",
+      rows: [
+        ["Pressures", "def_pressures", "int"],
+        ["Hurries", "def_hurries", "int"],
+        ["QB knockdowns", "def_qb_knockdowns", "int"],
+        ["QB hits", "def_qb_hits", "int"],
+        ["Sacks", "def_sacks", "num1"],
+        ["Tackles for loss", "def_tackles_for_loss", "int"],
+      ],
+    });
+    g.push({
+      title: "Coverage",
+      rows: [
+        ["Targeted", "def_targets", "int"],
+        ["Completions allowed", "def_completions_allowed", "int"],
+        // PFR ships this as a fraction, not as points.
+        ["Completion rate", "def_completion_pct_allowed", "pct"],
+        ["Yards allowed", "def_yards_allowed", "int"],
+        ["TDs allowed", "def_tds_allowed", "int"],
+        ["Passer rating allowed", "def_passer_rating_allowed", "num1"],
+        ["YAC allowed", "def_yac_allowed", "int"],
+        ["Interceptions", "def_interceptions", "int"],
+        ["Passes defended", "def_pass_defended", "int"],
+      ],
+    });
+    g.push({
+      title: "Tackling & usage",
+      rows: [
+        ["Tackles", "def_tackles_combined", "int"],
+        ["Missed tackles", "def_missed_tackles", "int"],
+        ["Missed tackle rate", "def_missed_tackle_pct", "pct"],
+        ["Forced fumbles", "def_fumbles_forced", "int"],
+        ["Defensive snaps", "def_snaps", "int"],
+      ],
+    });
+  }
+
+  // Red zone and usage are dropped for receivers and quarterbacks on
+  // purpose. Red zone is a second copy of the line above filtered to twenty
+  // yards of field, and usage is snaps and fantasy points — two dozen rows
+  // between the reader and anything the groups above had not already said.
+  const noSplits = isReceiver || isQB;
+  const rzCarries = noSplits ? 0 : Number(line.rz_carries ?? 0);
+  const rzTargets = noSplits ? 0 : Number(line.rz_targets ?? 0);
+  if (rzCarries > 0 || rzTargets > 0) {
+    g.push({
+      title: "Red zone",
+      rows: [
+        ...(rzCarries > 0
+          ? ([
+              ["Carries", "rz_carries", "int"],
+              ["Rush yards", "rz_rush_yards", "int"],
+              ["Rush TD", "rz_rush_tds", "int"],
+              ["Rush success", "rz_rush_success", "pct"],
+              ["EPA per rush", "rz_epa_per_rush", "signed"],
+              // Inside the five is a different job from inside the twenty.
+              ["Goal-line carries", "gl_carries", "int"],
+              ["Goal-line TD", "gl_rush_tds", "int"],
+            ] as Row[])
+          : []),
+        ...(rzTargets > 0
+          ? ([
+              ["Targets", "rz_targets", "int"],
+              ["Receptions", "rz_receptions", "int"],
+              ["Rec yards", "rz_rec_yards", "int"],
+              ["Rec TD", "rz_rec_tds", "int"],
+              ["EPA per target", "rz_epa_per_target", "signed"],
+              ["Goal-line targets", "gl_targets", "int"],
+            ] as Row[])
+          : []),
+      ],
+    });
+  }
+
+  if (!noSplits) g.push({
     title: "Usage",
     rows: [
-      ["Games", line.games, "int"],
-      ["Offensive snaps", line.off_snaps, "int"],
-      ["Snap share", line.off_snap_pct, "pct"],
-      ["Special teams snaps", line.st_snaps, "int"],
-      ["Fantasy points", line.fantasy_points, "num1"],
-      ["Fantasy points (PPR)", line.fantasy_points_ppr, "num1"],
-      ["Penalties", line.penalties, "int"],
-      ["Fumbles", line.fumbles_total, "int"],
+      ["Offensive snaps", "off_snaps", "int"],
+      ["Snap share", "off_snap_pct", "pct"],
+      ["Fantasy points", "fantasy_points", "num1"],
+      ["Fantasy points (PPR)", "fantasy_points_ppr", "num1"],
+      ["Penalties", "penalties", "int"],
+      ["Fumbles", "fumbles_total", "int"],
     ],
   });
 
-  // A group whose every figure is missing is noise; one stray zero is not.
+  // A row whose figure is missing is noise; a group with nothing left is worse.
+  const value = (src: Source) => (typeof src === "string" ? line[src] : src);
   return g
     .map((x) => ({
       ...x,
-      rows: x.rows.filter(([, v]) => v !== null && v !== undefined),
+      rows: x.rows.filter(([, src]) => {
+        const v = value(src);
+        return v !== null && v !== undefined;
+      }),
     }))
     .filter((x) => x.rows.length > 0);
 }
@@ -318,7 +444,7 @@ export default async function PlayerPage({
   if (!bio) notFound();
 
   const career = await getPlayerCareer(id);
-  // Only honour a season the player actually played; otherwise fall back to
+  // Only honor a season the player actually played; otherwise fall back to
   // his most recent, so a stale link never renders an empty card.
   const requested = sp.season ? Number(sp.season) : null;
   const season =
@@ -327,7 +453,7 @@ export default async function PlayerPage({
       : null) ??
     career[0]?.season ??
     manifest.stats_season;
-  const careerWar = await getPlayerCareerWar(id);
+  const careerEpa = await getPlayerCareerEpa(id);
 
   // Aging is a positional tendency, so it keys off the group rather than the
   // listed position; `getAgingCurve` falls back to the all-position curve when
@@ -336,235 +462,248 @@ export default async function PlayerPage({
   const aging = await getAgingCurve(posGroup);
   const agingFellBack = aging.length > 0 && aging[0].pos_group !== posGroup;
   const playerAge = Number(age(bio.birth_date as string));
-  const [line, log, teams, warSeasons] = await Promise.all([
+  const [line, log, teams] = await Promise.all([
     getPlayerSeason(id, Number(season)),
     getPlayerGameLog(id, Number(season)),
     getTeamMap(),
-    getPlayerWar(id),
   ]);
-  const war = warSeasons.find((w) => w.season === Number(season));
 
   const position = String(bio.position ?? line?.position ?? "");
-  const profile = PROFILES[position];
+  const isSkill = SKILL.has(position);
   const team = String(line?.recent_team ?? bio.team ?? "");
   const teamMeta = teams[team];
-  const isDefender = !profile && Number(line?.def_snaps ?? 0) > 0;
+  const isDefender = !isSkill && Number(line?.def_snaps ?? 0) > 0;
   const groups = line ? detailGroups(line as Record<string, unknown>, position) : [];
+  const totals = line ? (TOTALS[position] ?? []) : [];
+  // The career table used to print pass, rush and receiving yards for
+  // everybody, so a receiver read a column of zeroes and a quarterback read
+  // two. It uses the position's own column set instead, with EPA on the end.
+  // The career table draws EPA itself, in its own signed column on the end, so
+  // the strip's EPA entry is dropped here rather than printed twice.
+  const careerCols = (TOTALS[position] ?? CAREER_FALLBACK).filter(
+    ([, column]) => column !== "total_epa"
+  );
+  // Career is every season row the store holds for him, so a total is a sum
+  // across them rather than a separate stored figure.
+  const careerTotal = (column: string) =>
+    career.reduce((sum, row) => sum + Number((row as Record<string, unknown>)[column] ?? 0), 0);
 
+  // The rolling line under the bio. Every position that scores EPA at all
+  // scores it the same three ways, so one series covers the card rather than
+  // one per position.
   const weeklyEpa = log
-    .filter((g) => g.epa_per_db !== null && g.epa_per_db !== undefined)
-    .map((g) => ({ week: Number(g.week), value: Number(g.epa_per_db) }));
+    .map((g) => ({
+      week: Number(g.week),
+      value:
+        Number(g.passing_epa ?? 0) +
+        Number(g.rushing_epa ?? 0) +
+        Number(g.receiving_epa ?? 0),
+    }))
+    .filter((w) => Number.isFinite(w.value));
 
   return (
     <>
-      <div className="panel overflow-hidden mb-4">
-        <div className="h-1" style={{ background: teamMeta?.color ?? "var(--navy)" }} />
-        <div className="px-4 py-4 flex gap-4 flex-wrap items-start">
-          {bio.headshot ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={String(bio.headshot)}
-              alt=""
-              width={78}
-              height={78}
-              className="rounded-[3px] bg-panel-2 object-cover"
-            />
-          ) : (
-            <div className="w-[78px] h-[78px] rounded-[3px] bg-panel-2 grid place-items-center num text-ink-3 text-[22px]">
-              {bio.jersey_number ?? "—"}
-            </div>
-          )}
+      {/* Identity on the left, ranking on the right — the shape a reader
+          already knows from a baseball or basketball card. The left column is
+          fixed at 440px because it holds a portrait, a bio, and a totals
+          table that should not need a scrollbar of its own; the right takes whatever is left and never falls below zero,
+          which is what `minmax(0,1fr)` is for under the global `min-width: 0`. */}
+      <div className="grid gap-4 lg:grid-cols-[440px_minmax(0,1fr)] mb-4">
+        <div className="panel overflow-hidden">
+          <div className="h-1" style={{ background: teamMeta?.color ?? "var(--navy)" }} />
 
-          <div className="min-w-[220px] flex-1">
-            <h1 className="headline text-[26px] leading-none">{String(bio.name)}</h1>
-            <div className="text-[12.5px] text-ink-2 mt-1.5 flex items-center gap-2 flex-wrap">
-              {teamMeta && (
-                <TeamMark team={team} logo={teamMeta.logo} href={`/teams/${team}`} size={18} name={teamMeta.nick} />
+          <div className="px-5 pt-6 pb-4 text-center">
+            {bio.headshot ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={String(bio.headshot)}
+                alt=""
+                width={148}
+                height={148}
+                className="rounded-full bg-panel-2 object-cover mx-auto"
+              />
+            ) : (
+              <div className="w-[148px] h-[148px] rounded-full bg-panel-2 grid place-items-center num text-ink-3 text-[36px] mx-auto">
+                {bio.jersey_number ?? "—"}
+              </div>
+            )}
+
+            <h1 className="headline text-[30px] leading-tight mt-3.5">{String(bio.name)}</h1>
+
+            <div className="text-[13.5px] text-ink-2 mt-1.5 flex items-center justify-center gap-x-2 flex-wrap">
+              {teamMeta ? (
+                <TeamMark
+                  team={team}
+                  logo={teamMeta.logo}
+                  href={`/teams/${team}`}
+                  size={17}
+                  name={teamMeta.nick}
+                />
+              ) : (
+                <span>{team || "Free agent"}</span>
               )}
+              {bio.jersey_number ? (
+                <>
+                  <span className="text-ink-3">·</span>
+                  <span className="num text-ink-3">#{String(bio.jersey_number)}</span>
+                </>
+              ) : null}
               <span className="text-ink-3">·</span>
-              <span>{position}</span>
-              {bio.jersey_number ? <span className="text-ink-3">#{String(bio.jersey_number)}</span> : null}
+              <span>{position || "—"}</span>
             </div>
-            <div className="text-[12px] text-ink-3 mt-1.5">
-              {height(bio.height as number)} · {bio.weight ? `${bio.weight} lb` : "—"} · age{" "}
-              {age(bio.birth_date as string)} · {String(bio.college_name ?? "—")}
+
+            {bio.status ? (
+              <div className="text-[11.5px] text-ink-3 mt-2 flex items-center justify-center gap-1.5">
+                <span
+                  className="inline-block w-[7px] h-[7px] rounded-full"
+                  style={{
+                    background:
+                      bio.status === "ACT" ? "var(--pos)" : "var(--rule-strong)",
+                  }}
+                />
+                {STATUS[String(bio.status)] ?? String(bio.status)}
+              </div>
+            ) : null}
+          </div>
+
+          <dl className="px-5 py-3 border-t border-rule text-[13px]">
+            <BioRow label="Ht / Wt">
+              {height(bio.height as number)}
+              {bio.weight ? ` · ${bio.weight} lb` : ""}
+            </BioRow>
+            <BioRow label="Age">{age(bio.birth_date as string)}</BioRow>
+            <BioRow label="Experience">
+              {bio.years_of_experience ? `${bio.years_of_experience} seasons` : "Rookie"}
+            </BioRow>
+            <BioRow label="Draft">
               {bio.draft_year
-                ? ` · ${bio.draft_year} rd ${bio.draft_round} pick ${bio.draft_pick} (${bio.draft_team})`
-                : " · undrafted"}
-            </div>
-          </div>
+                ? `${bio.draft_year} · Rd ${bio.draft_round}, Pk ${bio.draft_pick}${
+                    bio.draft_team ? ` (${bio.draft_team})` : ""
+                  }`
+                : "Undrafted"}
+            </BioRow>
+            <BioRow label="College">{String(bio.college_name ?? "—")}</BioRow>
+          </dl>
 
-          <div className="border-l border-rule pl-4 min-w-[150px]">
-            <div className="label">Season</div>
-            <div className="num text-[26px] font-semibold leading-tight">{String(season)}</div>
-            <div className="text-[11.5px] text-ink-3">
-              {line?.games ? `${int(line.games as number)} games` : "no games"} ·{" "}
-              {line?.qualified ? "qualified" : "below threshold"}
-            </div>
-          </div>
-
-          {war && (
-            <div className="border-l border-rule pl-4 min-w-[168px]">
-              <div className="label">Wins above replacement</div>
-              <div className="flex items-baseline gap-2">
-                <div className="num text-[30px] font-semibold leading-tight">
-                  {num(war.war, 1)}
-                </div>
-              </div>
-              <div className="text-[11px] text-ink-3 mt-0.5">
-                {num(war.par, 0)} points above replacement · {int(war.plays)} plays
-              </div>
+          {line && totals.length > 0 && (
+            <div className="border-t border-rule scroll-x">
+              <table className="grid-table text-[12.5px]" data-nosort>
+                <thead>
+                  <tr>
+                    <th className="l" />
+                    {totals.map(([label]) => (
+                      <th key={label}>{label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="l font-semibold">{season}</td>
+                    {totals.map(([label, column, kind]) => (
+                      <td key={label} className="num font-semibold">
+                        {fmt(line[column], kind)}
+                      </td>
+                    ))}
+                  </tr>
+                  {career.length > 1 && (
+                    <tr>
+                      <td className="l text-ink-2">Career</td>
+                      {totals.map(([label, column, kind]) => (
+                        <td key={label} className="num text-ink-2">
+                          {fmt(careerTotal(column), kind)}
+                        </td>
+                      ))}
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {careerWar && careerWar.seasons > 1 && (
-            <div className="border-l border-rule pl-4 min-w-[142px]">
-              <div className="label">Career</div>
-              <div className="num text-[30px] font-semibold leading-tight">
-                {num(careerWar.career_war, 1)}
-              </div>
-              <div className="text-[11px] text-ink-3 mt-0.5">
-                WAR across {int(careerWar.seasons)} seasons
-                <br />
-                best {careerWar.best_season} at {num(careerWar.best_season_war, 1)}
-              </div>
+          {weeklyEpa.length > 1 && (
+            <div className="border-t border-rule px-2 pt-2 pb-1">
+              <div className="label px-2">Weekly EPA</div>
+              <LineChart
+                labels={weeklyEpa.map((w) => String(w.week))}
+                series={[
+                  {
+                    name: "EPA",
+                    color: "var(--c1)",
+                    values: weeklyEpa.map((w) => w.value),
+                    fill: true,
+                  },
+                ]}
+                width={660}
+                height={240}
+                format={(v) => v.toFixed(0)}
+              />
             </div>
           )}
         </div>
-      </div>
 
-      {!line ? (
-        <Empty>No {season} statistics for this player.</Empty>
-      ) : (
-        <>
-          <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
-            {(profile?.tiles ?? (isDefender ? DEFENSE.map(([k, l, f]) => [k, l, f] as [string, string, "int" | "num"]) : [])).map(
-              ([key, label, kind]) => (
-                <StatTile key={key} label={label} value={fmt(line[key], kind)} />
-              )
-            )}
+        {/* The ranking sheet. One column, sectioned — a three-across grid of
+            group boxes made every row's bar a different length from its
+            neighbor's, so nothing could be read down. */}
+        <div className="panel overflow-hidden">
+          <div className="px-4 pt-3.5 pb-2">
+            <h2 className="headline text-[17px] leading-none">
+              {season} season · league percentile rankings
+            </h2>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[1fr_1fr] mt-7">
-            {profile && (
-              <div>
-                <SectionRule>Percentile rankings</SectionRule>
-                <Panel bodyClass="px-4 py-3">
-                  {/* The scale, stated once, so no row has to explain itself. */}
-                  <div className="grid grid-cols-[minmax(96px,132px)_1fr_62px] items-center gap-3 pb-2 mb-1 border-b border-rule">
-                    <span className="label">vs position</span>
-                    <span className="flex items-center gap-2">
-                      <span className="text-[10.5px] text-ink-3">0</span>
-                      <span
-                        className="h-[5px] flex-1 rounded-full"
-                        style={{
-                          background:
-                            "linear-gradient(to right, #1b5fa8, #d9d4cc 50%, #b3332a)",
-                        }}
-                      />
-                      <span className="text-[10.5px] text-ink-3">100</span>
-                    </span>
-                    <span className="label text-right">Value</span>
-                  </div>
+          {!line ? (
+            <Empty>No {season} statistics for this player.</Empty>
+          ) : groups.length === 0 ? (
+            <Empty>No ranked statistics for this player.</Empty>
+          ) : (
+            <>
+              {/* The scale, once, over the column every bar shares. */}
+              <div className={`${RANK_GRID} px-4 pb-1.5`}>
+                <span />
+                <span className="flex justify-between label text-ink-3">
+                  <span>Poor</span>
+                  <span>Average</span>
+                  <span>Great</span>
+                </span>
+                <span />
+              </div>
 
-                  {profile.percentiles.map(([key, label, kind]) => {
-                    const rank = line[key] as number | null | undefined;
-                    const raw = line[key.replace(/^pct_/, "")];
+              {groups.map((group) => (
+                <section key={group.title} className="border-t border-rule px-4 py-2.5">
+                  <div className="label mb-1.5">{group.title}</div>
+                  {group.rows.map(([label, source, kind]) => {
+                    const value = typeof source === "string" ? line[source] : source;
+                    const rank =
+                      typeof source === "string"
+                        ? (line[`pct_${source}`] as number | null | undefined)
+                        : null;
                     return (
-                      <div
-                        key={key}
-                        className="grid grid-cols-[minmax(96px,132px)_1fr_62px] items-center gap-3 py-[5px]"
-                      >
-                        <span className="text-[12.5px] text-ink-2 leading-tight">{label}</span>
+                      <div key={label} className={`${RANK_GRID} items-center py-[2.5px]`}>
+                        <span className="text-[12.5px] text-ink-2 leading-tight truncate">
+                          {label}
+                        </span>
                         <PercentileBar value={rank} label={label} />
                         <span className="num text-[12.5px] text-right font-semibold">
-                          {raw === null || raw === undefined ? "—" : fmt(raw, kind)}
+                          {fmt(value, kind)}
                         </span>
                       </div>
                     );
                   })}
-                </Panel>
-              </div>
-            )}
-
-            <div>
-              <SectionRule>
-                {position === "QB" ? "EPA per dropback" : "Season log"}
-              </SectionRule>
-              <Panel bodyClass="p-3">
-                {weeklyEpa.length > 1 ? (
-                  <ChartExport
-                    filename={`${String(bio.name ?? id).replace(/\W+/g, "-").toLowerCase()}-${season}`}
-                    caption={`${String(bio.name ?? "")} · ${season} EPA per dropback`}
-                  >
-                  <LineChart
-                    labels={weeklyEpa.map((w) => `W${w.week}`)}
-                    series={[{ name: "EPA per dropback", color: "var(--c1)", values: weeklyEpa.map((w) => w.value), fill: true }]}
-                    height={230}
-                    format={(v) => v.toFixed(2)}
-                  />
-                  </ChartExport>
-                ) : (
-                  <Empty>No per-play chart for this position yet.</Empty>
-                )}
-              </Panel>
-            </div>
-          </div>
-
-          {groups.length > 0 && (
-            <>
-              <SectionRule>Season detail</SectionRule>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 mb-2">
-                {groups.map((group) => (
-                  <Panel key={group.title} title={group.title} bodyClass="px-4 py-2">
-                    <dl className="m-0">
-                      {group.rows.map(([label, value, kind]) => (
-                        <div
-                          key={label}
-                          className="flex items-baseline justify-between gap-3 py-[3px] border-b border-rule last:border-0"
-                        >
-                          <dt className="text-[12.5px] text-ink-2">{label}</dt>
-                          <dd className="num text-[12.5px] font-semibold m-0">{fmt(value, kind)}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </Panel>
-                ))}
-              </div>
+                </section>
+              ))}
             </>
           )}
+        </div>
+      </div>
 
-          {war && (
-            <>
-              <SectionRule>Value</SectionRule>
-              <Panel bodyClass="px-4 py-3">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {[
-                    ["Passing", war.war_passing, war.plays_passing],
-                    ["Rushing", war.war_rushing, war.plays_rushing],
-                    ["Receiving", war.war_receiving, war.plays_receiving],
-                    ["Defense", war.war_defense, war.plays_defense],
-                  ]
-                    .filter(([, , plays]) => Number(plays) > 0)
-                    .map(([label, value, plays]) => (
-                      <div key={String(label)} className="border border-rule rounded-[3px] px-3 py-2.5">
-                        <div className="label">{String(label)}</div>
-                        <div className="num text-[20px] font-semibold mt-0.5">
-                          {num(Number(value), 2)}
-                        </div>
-                        <div className="text-[11px] text-ink-3">{int(Number(plays))} plays</div>
-                      </div>
-                    ))}
-                </div>
-                <div className="text-[11.5px] text-ink-3 mt-3 leading-relaxed">
-                  Quarterbacks are charged with the whole dropback, scrambles and sacks included;
-                  receivers are judged on the full result of the target against what a throw of
-                  that depth was worth; defenders are measured on their charted production rather
-                  than plus-minus. Offensive linemen share a unit number split by snaps.{" "}
-                  <Link href="/war" className="text-accent">How this is built</Link>
-                </div>
-              </Panel>
-            </>
+      {!line ? null : (
+        <>
+          {!isSkill && isDefender && (
+            <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(150px,1fr))] mb-4">
+              {DEFENSE.map(([key, label, kind]) => (
+                <StatTile key={key} label={label} value={fmt(line[key], kind)} />
+              ))}
+            </div>
           )}
 
           {aging.length >= 5 && (
@@ -681,40 +820,56 @@ export default async function PlayerPage({
                       <tr>
                         <th>Season</th>
                         <th className="l">Team</th>
-                        <th>G</th>
-                        <th>Pass yds</th>
-                        <th>Rush yds</th>
-                        <th>Rec yds</th>
-                        <th>Total EPA</th>
+                        {careerCols.map(([label]) => (
+                          <th key={label}>{label}</th>
+                        ))}
+                        <th>EPA</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {career.map((s) => (
-                        <tr key={String(s.season)}>
+                      {career.map((sn) => (
+                        <tr key={String(sn.season)}>
                           <td>
                             <Link
-                              href={`/players/${id}?season=${s.season}`}
+                              href={`/players/${id}?season=${sn.season}`}
                               className={`link-cell num ${
-                                Number(s.season) === Number(season) ? "font-semibold" : ""
+                                Number(sn.season) === Number(season) ? "font-semibold" : ""
                               }`}
                             >
-                              {String(s.season)}
+                              {String(sn.season)}
                             </Link>
                           </td>
                           <td>
                             <TeamMark
-                              team={String(s.recent_team)}
-                              logo={teams[String(s.recent_team)]?.logo}
+                              team={String(sn.recent_team)}
+                              logo={teams[String(sn.recent_team)]?.logo}
                               size={17}
                             />
                           </td>
-                          <td className="num text-ink-2">{int(s.games as number)}</td>
-                          <td className="num text-ink-2">{int(s.passing_yards as number)}</td>
-                          <td className="num text-ink-2">{int(s.rushing_yards as number)}</td>
-                          <td className="num text-ink-2">{int(s.receiving_yards as number)}</td>
-                          <td className="num font-semibold">{signed(s.total_epa as number, 1)}</td>
+                          {careerCols.map(([label, column, kind]) => (
+                            <td key={label} className="num text-ink-2">
+                              {fmt((sn as Record<string, unknown>)[column], kind)}
+                            </td>
+                          ))}
+                          <td className="num font-semibold">{signed(sn.total_epa as number, 1)}</td>
                         </tr>
                       ))}
+                      {careerEpa && careerEpa.seasons > 1 && (
+                        <tr>
+                          <td className="l text-ink-2">Career</td>
+                          <td className="l text-ink-3 text-[11.5px]">
+                            {careerEpa.seasons} seasons
+                          </td>
+                          {careerCols.map(([label, column, kind]) => (
+                            <td key={label} className="num text-ink-2">
+                              {fmt(careerTotal(column), kind)}
+                            </td>
+                          ))}
+                          <td className="num font-semibold">
+                            {signed(careerEpa.career_epa, 0)}
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -722,7 +877,7 @@ export default async function PlayerPage({
             </>
           )}
 
-          {profile && (
+          {isSkill && (
             <Notes title="Reading the percentiles">
               <ul>
                 <li>
@@ -731,14 +886,22 @@ export default async function PlayerPage({
                   50th, and the figure at the right is the stat itself.
                 </li>
                 <li>
-                  Red is the top of the position, blue the bottom, grey the middle. The two ends
-                  stay apart for colourblind readers and in greyscale, but the number is printed
-                  in the bubble either way, so nothing depends on seeing the colour.
+                  Red is the top of the position, blue the bottom, gray the middle. The two ends
+                  stay apart for colorblind readers and in grayscale, but the number is printed
+                  in the bubble either way, so nothing depends on seeing the color.
                 </li>
                 <li>
                   Sack avoidance inverts its stat — a low sack rate ranks high. Players below the
                   usage threshold are left out of the ranking entirely rather than ranked on a
                   handful of plays.
+                </li>
+                <li>
+                  Expected points added is charged to the man who touched the ball, so a
+                  dropback, a carry and a target are the whole of it. A quarterback wears the
+                  sack and the scramble along with the throw; a receiver wears the full result of
+                  the target. Blocking and coverage score nothing here, which is why linemen and
+                  defenders read their charted production instead.{" "}
+                  <Link href="/glossary" className="text-accent">What the terms mean</Link>
                 </li>
                 <li>
                   A route here is a regular-season dropback the player was on the field for, counted
@@ -753,5 +916,24 @@ export default async function PlayerPage({
         </>
       )}
     </>
+  );
+}
+
+/**
+ * The shared column template for a ranked row: label, bar, figure.
+ *
+ * Named rather than repeated so the "Poor / Average / Great" scale above the
+ * list sits over exactly the track the bars use. The bar column is elastic and
+ * the figure column fixed, so every number in the sheet lines up on its right
+ * edge however long the label beside it runs.
+ */
+const RANK_GRID = "grid grid-cols-[minmax(0,1fr)_minmax(140px,3.4fr)_58px] gap-3";
+
+function BioRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 py-[5px]">
+      <dt className="label shrink-0">{label}</dt>
+      <dd className="text-right text-ink-2 truncate">{children}</dd>
+    </div>
   );
 }

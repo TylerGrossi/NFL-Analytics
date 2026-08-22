@@ -7,8 +7,8 @@ Strength of schedule follows the standard construction — fantasy points allowe
 to each position, ranked one to thirty-two, averaged across a club's opponents.
 Two caveats are worth stating rather than burying, because this metric is
 routinely oversold. It is built from last season's defensive performance, and
-defence is the least repeatable thing in football: team defensive rating carries
-year to year at only 0.34. And it says nothing about the personnel a defence
+defense is the least repeatable thing in football: team defensive rating carries
+year to year at only 0.34. And it says nothing about the personnel a defense
 will actually field in September. It is a tiebreaker between close players, not
 a reason to move anyone up a round.
 """
@@ -33,12 +33,12 @@ AVAILABILITY_SEASONS = 3
 
 
 def _points_allowed(season: int) -> pl.DataFrame:
-    """Fantasy points each defence gave up to each position, per game."""
+    """Fantasy points each defense gave up to each position, per game."""
     w = nv.player_stats_weekly(season)
     if w.height == 0 or "opponent_team" not in w.columns:
         return pl.DataFrame()
     # Regular season only. The feed carries postseason weeks in the same table,
-    # and only fourteen clubs play them — leaving them in hands those defences
+    # and only fourteen clubs play them — leaving them in hands those defenses
     # extra games in a per-game average the other eighteen are ranked against.
     if "season_type" in w.columns:
         w = w.filter(pl.col("season_type") == "REG")
@@ -74,7 +74,7 @@ def _schedule(season: int) -> pl.DataFrame:
 
 
 def build(season: int, players: pl.DataFrame, fantasy: pl.DataFrame) -> pl.DataFrame:
-    """`season` is the one being drafted for; defence comes from the year before."""
+    """`season` is the one being drafted for; defense comes from the year before."""
     with step("fantasy draft kit"):
         allowed = _points_allowed(season - 1)
         schedule = _schedule(season)

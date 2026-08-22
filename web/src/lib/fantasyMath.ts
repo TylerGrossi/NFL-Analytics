@@ -62,7 +62,7 @@ export function slotAccepts(slot: string, position: string | null): boolean {
  * RB slot needed. With only single-position slots and flexes drawing from a
  * superset, that ordering gives the same answer as an exhaustive assignment.
  */
-export function optimiseLineup(roster: Candidate[], slots: string[]): {
+export function optimizeLineup(roster: Candidate[], slots: string[]): {
   starters: FilledSlot[];
   bench: Candidate[];
   total: number;
@@ -117,7 +117,7 @@ export function swapCost(
 /** Standard deviation of one player's week, from the fitted position model. */
 export function playerSd(proj: number, position: string | null, fits: VarianceFit[]): number {
   const f = fits.find((x) => x.position === position);
-  // An unfitted position (kicker, defence) gets the average skill-position
+  // An unfitted position (kicker, defense) gets the average skill-position
   // spread rather than zero, which would claim a certainty we do not have.
   if (!f) return Math.max(3, 3.5 + 0.25 * proj);
   return Math.max(1, f.sd_base + f.sd_slope * proj);
@@ -127,7 +127,7 @@ export type MatchupOdds = {
   meanA: number; meanB: number;
   sdA: number; sdB: number;
   winProbA: number;
-  /** Points A must make up, negative when A is favoured. */
+  /** Points A must make up, negative when A is favored. */
   margin: number;
 };
 

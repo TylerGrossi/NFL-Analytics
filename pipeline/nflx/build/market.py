@@ -82,8 +82,8 @@ def _grade(df: pl.DataFrame) -> pl.DataFrame:
     """Attach the actual result, and who each side of the market picked.
 
     Sign convention, which is the easiest thing to get backwards here:
-    nflverse stores `spread_line` as the points the **home** team is favoured
-    by, so a home favourite is positive and it is directly comparable to
+    nflverse stores `spread_line` as the points the **home** team is favored
+    by, so a home favorite is positive and it is directly comparable to
     `proj_margin`.
     """
     d = df.with_columns(

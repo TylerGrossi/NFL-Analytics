@@ -13,7 +13,7 @@ import {
   getTeamMap,
   type Game,
 } from "@/lib/queries";
-import { gameDate, int, num, pct, signed, line } from "@/lib/format";
+import { fourthCall, gameDate, int, num, pct, signed, line } from "@/lib/format";
 import { distinguishTeamColors } from "@/lib/colors";
 
 export async function CompletedGame({ game }: { game: Game }) {
@@ -198,10 +198,10 @@ export async function CompletedGame({ game }: { game: Game }) {
                         </td>
                         <td className="l text-[11.5px] text-ink-2">
                           4th &amp; {String(f.ydstogo)} ·{" "}
-                          {Number(f.yardline_100) > 50 ? `own ${100 - Number(f.yardline_100)}` : `opp ${f.yardline_100}`}
+                          {Number(f.yardline_100) > 50 ? `Own ${100 - Number(f.yardline_100)}` : `Opp ${f.yardline_100}`}
                         </td>
-                        <td className="l text-[11.5px] num text-ink-2">{String(f.choice)}</td>
-                        <td className="l text-[11.5px] num font-semibold">{String(f.best)}</td>
+                        <td className="l text-[11.5px] num text-ink-2">{fourthCall(f.choice as string)}</td>
+                        <td className="l text-[11.5px] num font-semibold">{fourthCall(f.best as string)}</td>
                         <td className="num" style={{ color: f.optimal ? "var(--ink-3)" : "var(--neg)" }}>
                           {f.optimal ? "—" : num(Number(f.wp_lost), 1)}
                         </td>

@@ -5,7 +5,7 @@ import type { Team, WeekProj } from "@/lib/queries";
 import {
   matchupOdds,
   marginBuckets,
-  optimiseLineup,
+  optimizeLineup,
   playerSd,
   swapCost,
   type Candidate,
@@ -48,7 +48,7 @@ export function LineupPanel({
   week: number;
 }) {
   const roster = toCandidates(team, proj);
-  const { starters, bench } = optimiseLineup(roster, slots);
+  const { starters, bench } = optimizeLineup(roster, slots);
   const swaps = swapCost(starters, bench);
 
   return (
@@ -152,8 +152,8 @@ export function MatchupPanel({
   fits: VarianceFit[];
   week: number;
 }) {
-  const lineA = optimiseLineup(toCandidates(a, proj), league.slots);
-  const lineB = optimiseLineup(toCandidates(b, proj), league.slots);
+  const lineA = optimizeLineup(toCandidates(a, proj), league.slots);
+  const lineB = optimizeLineup(toCandidates(b, proj), league.slots);
   const odds = matchupOdds(lineA.starters, lineB.starters, fits);
   const dist = marginBuckets(odds);
   const peak = Math.max(...dist.map((d) => d.p), 0.0001);

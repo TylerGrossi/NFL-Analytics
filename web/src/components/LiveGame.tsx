@@ -47,13 +47,13 @@ export function LiveGame({
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     async function poll() {
       try {
         const res = await fetch(`/api/live/${eventId}`, { cache: "no-store" });
-        if (!res.ok || cancelled) return;
+        if (!res.ok || canceled) return;
         const next = await res.json();
-        if (!cancelled) {
+        if (!canceled) {
           setData(next);
           setUpdatedAt(new Date());
         }
@@ -64,7 +64,7 @@ export function LiveGame({
     const id = setInterval(poll, POLL_MS);
     poll();
     return () => {
-      cancelled = true;
+      canceled = true;
       clearInterval(id);
     };
   }, [eventId]);

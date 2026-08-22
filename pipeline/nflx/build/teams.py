@@ -17,7 +17,7 @@ CURRENT = {
 # Codes the store still uses because nflverse labels a game with the name the
 # club carried that season. They are kept out of `teams` — that table is the
 # 32-club league, and drives the team index and its routes — and written
-# separately so a 2015 table can still draw San Diego rather than a grey box.
+# separately so a 2015 table can still draw San Diego rather than a gray box.
 HISTORIC = {"SD", "OAK", "STL"}
 
 # ---------------------------------------------------------------- identity

@@ -109,7 +109,7 @@ export function Notes({
  * A row of figures, as one object rather than several.
  *
  * These used to be individual bordered cards laid out in a grid. Six identical
- * boxes in a line is the single most recognisable shape in generated UI: it
+ * boxes in a line is the single most recognizable shape in generated UI: it
  * gives every figure the same weight, so the reader gets no help deciding
  * which one matters, and it draws twenty-four borders to separate things a
  * hairline could. One sheet with dividers reads as a considered summary.
@@ -269,15 +269,15 @@ export function DivergingBar({
  * The percentile scale: blue at the bottom, red at the top, a light neutral
  * through the middle.
  *
- * A percentile has a meaningful centre — the 50th is the league — so this is a
- * diverging scale rather than a single ramp, and the midpoint is grey so that
+ * A percentile has a meaningful center — the 50th is the league — so this is a
+ * diverging scale rather than a single ramp, and the midpoint is gray so that
  * "average" reads as nothing in particular. The poles were checked rather than
  * chosen by eye: blue #1b5fa8 against red #b3332a separates at ΔE 19.6 under
  * protanopia and 29.5 under tritanopia, and both clear 3:1 on white. Each arm
  * runs monotonically light-to-dark out from the middle, so rank survives as
- * lightness alone in greyscale or print.
+ * lightness alone in grayscale or print.
  *
- * The number is drawn inside the bubble, so colour never carries the value on
+ * The number is drawn inside the bubble, so color never carries the value on
  * its own.
  */
 const P_LOW: [number, number, number] = [27, 95, 168]; // #1b5fa8
@@ -300,7 +300,7 @@ function percentileColor(value: number): { fill: string; ink: string } {
   // of the scale sits in washed terracotta — a 74th percentile looked no more
   // red than a 60th, which is the one distinction the scale exists to draw.
   // The exponent pulls saturation toward the poles and leaves only the genuine
-  // middle grey.
+  // middle gray.
   const t = raw ** 0.62;
   const ends = v >= 50 ? [from, to] : [to, from];
   const rgb = ends[0].map((c, i) => Math.round(c + (ends[1][i] - c) * t)) as [
@@ -309,7 +309,7 @@ function percentileColor(value: number): { fill: string; ink: string } {
     number,
   ];
 
-  // Pick whichever label colour actually has more contrast on this fill, rather
+  // Pick whichever label color actually has more contrast on this fill, rather
   // than switching at a fixed lightness — near the middle of each arm the naive
   // threshold chose white where dark ink reads better.
   const L = luminance(rgb);
@@ -322,11 +322,13 @@ function percentileColor(value: number): { fill: string; ink: string } {
 }
 
 /**
- * One percentile row: a bar filled to the rank, coloured on the diverging scale,
- * with the figure set at the filled end.
+ * One percentile row: a bar filled to the rank, colored on the diverging scale,
+ * with the figure in a pill straddling the end of the fill.
  *
- * The bar carries the value twice — length and colour — which is what lets a
- * column of them be read down at a glance rather than one at a time.
+ * The bar carries the value twice — length and color — which is what lets a
+ * column of them be read down at a glance rather than one at a time. The pill
+ * rides the fill's end rather than sitting inside it, so a short bar and a long
+ * one put their number in the same relationship to the data.
  */
 export function PercentileBar({
   value,
@@ -335,42 +337,51 @@ export function PercentileBar({
   value: number | null | undefined;
   label?: string;
 }) {
+  // The empty track, not a dash and not nothing. Several rows are
+  // deliberately unranked — depth of target and cushion describe a role, not a
+  // quality — and a dash there reads as data we failed to load rather than a
+  // rank we chose not to assert. Drawing nothing was worse again: it left the
+  // row shorter than its neighbours and broke the column a reader scans down.
   if (value === null || value === undefined) {
-    return <span className="text-ink-3 text-[12px]">no qualifying sample</span>;
+    return (
+      <span className="relative flex items-center h-[24px]">
+        <span className="absolute inset-0 rounded-[3px] bg-panel-3 opacity-60" />
+      </span>
+    );
   }
   const v = Math.max(0, Math.min(100, value));
   const { fill, ink } = percentileColor(v);
-  // Below this the fill is too short to hold its own number, so the figure sits
-  // just outside it in body ink instead of being squeezed against the edge.
-  const inside = v >= 16;
   return (
     <span
-      className="relative block h-[20px] rounded-[3px] bg-panel-3 overflow-hidden"
+      className="relative flex items-center h-[24px]"
       title={label ? `${label}: ${ordinal(Math.round(v))} of qualifying players at the position` : undefined}
     >
+      <span className="absolute inset-0 rounded-[3px] bg-panel-3" />
       <span
-        className="absolute inset-y-0 left-0 rounded-[3px] flex items-center justify-end"
-        style={{ width: `${v}%`, background: fill, paddingRight: inside ? 6 : 0 }}
+        className="absolute inset-y-0 left-0 rounded-[3px]"
+        style={{ width: `${v}%`, background: fill }}
+      />
+      {/* Held clear of both ends so the pill never hangs off the track. */}
+      <span
+        className="absolute grid place-items-center rounded-full num font-semibold"
+        style={{
+          left: `clamp(15px, ${v}%, calc(100% - 15px))`,
+          transform: "translateX(-50%)",
+          minWidth: 28,
+          height: 21,
+          padding: "0 6px",
+          background: fill,
+          color: ink,
+          fontSize: 11,
+          boxShadow: "0 0 0 1.5px var(--panel)",
+        }}
       >
-        {inside && (
-          <span className="num font-semibold" style={{ color: ink, fontSize: 10.5 }}>
-            {Math.round(v)}
-          </span>
-        )}
+        {Math.round(v)}
       </span>
-      {!inside && (
-        <span
-          className="absolute inset-y-0 num font-semibold flex items-center text-ink-2"
-          style={{ left: `calc(${v}% + 6px)`, fontSize: 10.5 }}
-        >
-          {Math.round(v)}
-        </span>
-      )}
-      {/* The league marker. A percentile plot with no 50 has no anchor. */}
-      <span className="absolute inset-y-0 left-1/2 w-px bg-rule-strong opacity-70" />
     </span>
   );
 }
+
 
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="px-4 py-8 text-center text-ink-3 text-[13px]">{children}</div>;

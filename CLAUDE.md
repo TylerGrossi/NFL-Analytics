@@ -27,7 +27,7 @@ commit, not yours to sweep up.
 This project's credibility rests on published, reproducible numbers, so the bar
 for saying something works is that it was run:
 
-- **Check every metric against recognisable reference rankings before shipping
+- **Check every metric against recognizable reference rankings before shipping
   it.** Team-level backtests can pass while individual attribution is broken —
   that is the lesson the WAR rebuild came from, and it is the most important
   rule here. If the running back leaderboard does not look like the actual best

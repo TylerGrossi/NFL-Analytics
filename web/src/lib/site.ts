@@ -71,6 +71,8 @@ export const NAV: NavGroup[] = [
     href: "/lab",
     items: [
       { href: "/lab", label: "The Lab", blurb: "Ask your own question of the plays" },
+      { href: "/visuals", label: "Visuals", blurb: "Run gaps, and any two numbers against each other" },
+      { href: "/snaps", label: "Snap counts", blurb: "Week by week, by team and position" },
       { href: "/market", label: "Model vs market", blurb: "Backtested against the closing line" },
       { href: "/tools/fourth-down", label: "Fourth down", blurb: "Go, kick or punt" },
       { href: "/glossary", label: "Glossary", blurb: "Every definition, formula and constant" },

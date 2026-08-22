@@ -35,7 +35,9 @@ from .build import line as build_line
 from .build import market as build_market
 from .build import participation as build_participation
 from .build import pbp as build_pbp
+from .build import gaps as build_gaps
 from .build import players as build_players
+from .build import snaps as build_snaps
 from .build import playoffs as build_playoffs
 from .build import previews as build_previews
 from .build import standings as build_standings
@@ -69,8 +71,12 @@ def cmd_build(args) -> None:
     build_standings.build(games, teams, team_season)
     index = build_players.build_index()
     player_seasons = build_players.build_seasons(seasons, index)
+    # EPA is the site's headline figure, so it gets a career table of its own.
+    career_epa = build_players.build_career_epa(player_seasons)
     build_players.build_weekly(seasons)
+    build_snaps.build(seasons, index)
     build_fourth_down.build(seasons, games)
+    build_gaps.build(seasons)
     participation = build_participation.build(seasons)
     line_team = build_line.build(seasons, participation)
     build_charted.build(seasons)
@@ -84,12 +90,16 @@ def cmd_build(args) -> None:
         pl.read_parquet(PARQUET / "fourth_down_teams.parquet"),
     )
     build_contracts.build(teams, seasons, upcoming)
-    # WAR's career table is written to parquet by the step above.
-    build_draft.build(seasons, index, pl.read_parquet(PARQUET / "war_career.parquet"))
+    # WAR's career table is written to parquet by the step above; the draft
+    # board prices picks in career EPA and keeps WAR alongside for /war.
+    build_draft.build(
+        seasons, index, pl.read_parquet(PARQUET / "war_career.parquet"), career_epa
+    )
     # Aging curves and pick value; reads the draft table the step above writes.
     build_trade.build(
         pl.read_parquet(PARQUET / "contracts.parquet"),
         pl.read_parquet(PARQUET / "war_season.parquet"),
+        player_seasons,
         index,
         pl.read_parquet(PARQUET / "draft_picks.parquet"),
         upcoming,

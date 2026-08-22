@@ -23,7 +23,7 @@ const SITE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
  * Two practical consequences:
  *   - **curl cannot test this endpoint.** A 403 from curl says nothing about
  *     what the app will get. Use Node.
- *   - workerd is a third client again, so the Worker's proxy behaviour does not
+ *   - workerd is a third client again, so the Worker's proxy behavior does not
  *     follow from either result and needs verifying once deployed.
  *
  * Exported because `live.ts` calls the same API directly and drifted out of sync

@@ -6,11 +6,11 @@ league's own designations into empirical rates. Two things fall out that a flat
 rule of thumb throws away:
 
 - Practice participation carries more information than the game designation.
-  A Questionable player who practised fully plays 79% of the time; the same
+  A Questionable player who practiced fully plays 79% of the time; the same
   designation with no practice at all is 46%. Quoting one number for
   "Questionable" discards a thirty-point swing.
 - A player on the report with no designation is not healthy. He plays 93%, not
-  100%, and if he did not practise, 77%.
+  100%, and if he did not practice, 77%.
 
 Only players whose id demonstrably bridges to the snap data in that season are
 counted. Otherwise a failed id match looks identical to a player who sat out,
@@ -85,8 +85,8 @@ def _history(seasons: list[int], idx: pl.DataFrame) -> pl.DataFrame:
     return pl.concat(frames, how="diagonal") if frames else pl.DataFrame()
 
 
-def _normalise() -> tuple[pl.Expr, pl.Expr]:
-    """Collapse the league's wordy fields into the four values people recognise."""
+def _normalize() -> tuple[pl.Expr, pl.Expr]:
+    """Collapse the league's wordy fields into the four values people recognize."""
     status = (
         pl.when(pl.col("report_status").is_in(["Out", "Doubtful", "Questionable"]))
         .then(pl.col("report_status"))
@@ -107,7 +107,7 @@ def _normalise() -> tuple[pl.Expr, pl.Expr]:
 
 
 def _rates(hist: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
-    status, practice = _normalise()
+    status, practice = _normalize()
     h = hist.with_columns(status, practice)
 
     by_both = (
@@ -201,7 +201,7 @@ def build(seasons: list[int], upcoming: int, index: pl.DataFrame) -> pl.DataFram
             log("no injury reports published")
             return rates
 
-        status, practice = _normalise()
+        status, practice = _normalize()
         reports = (
             reports.with_columns(status, practice)
             .join(by_both.select("status", "practice", "p_play"), on=["status", "practice"], how="left")

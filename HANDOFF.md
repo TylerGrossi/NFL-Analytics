@@ -100,7 +100,7 @@ The site read as templated. Three changes.
   `--font-data`.
 - **No more ALL CAPS.** Every `text-transform: uppercase` is removed from
   `globals.css` and all components. Hierarchy comes from weight, size and
-  colour. `.label`, `.panel-head h2`, `.grid-table th` and `.headline` were the
+  color. `.label`, `.panel-head h2`, `.grid-table th` and `.headline` were the
   offenders.
 - **Grouped navigation.** `NAV` in `src/lib/site.ts` is now `NavGroup[]` — five
   sections (Games, Teams, Players, Fantasy, Research), each with items carrying
@@ -205,7 +205,7 @@ user can supply.
    totals loop used the *original* index, so moves silently stopped counting
    after you re-sorted the table.
 3. **Film on game pages — done, and the 403 was not a stale event id.** Every
-   ESPN call in the project was 403ing: their edge refuses an unrecognised agent
+   ESPN call in the project was 403ing: their edge refuses an unrecognized agent
    carrying a `name/version` token, and both `sources/espn.py` and
    `web/src/lib/espn.ts` sent `hashmark-analytics/0.1` (the site was called
   Hashmark then). Dropping the version token fixes it
@@ -240,7 +240,7 @@ Deliberately deferred by the user: **Vercel deployment**.
 
 Both were silent — nothing errored, the numbers were just wrong.
 
-- **ESPN User-Agent.** Covered in §4 item 3. The symptom to recognise if it
+- **ESPN User-Agent.** Covered in §4 item 3. The symptom to recognize if it
   recurs: every ESPN-backed surface goes quietly empty because `_get()` and
   `get()` both swallow a failure and return `None` by design.
 - **Postseason rows in fantasy points allowed.** `nv.player_stats_weekly()`
@@ -254,9 +254,9 @@ Both were silent — nothing errored, the numbers were just wrong.
 
 ## 6. The matchup coefficient, and why it is not 1.0
 
-The one new modelling constant. Every fantasy tool multiplies a projection by the
+The one new modeling constant. Every fantasy tool multiplies a projection by the
 opponent's fantasy-points-allowed index, which claims the whole spread between
-defences survives into this week. Regressing 48,103 player weeks on the
+defenses survives into this week. Regressing 48,103 player weeks on the
 opponent's prior-season index — with the predicted week held out of the player's
 own rate, so the baseline cannot see the answer — says otherwise:
 
@@ -297,7 +297,7 @@ the rename touched more than that file claimed to — the mark in `public/`, the
 ESPN user-agent in **both** `lib/espn.ts` and `sources/espn.py`, the CSV export
 filename, the chart-export watermark, and two "Hashmark model" captions.
 
-**The user-agent change was tested before shipping.** ESPN 403s unrecognised
+**The user-agent change was tested before shipping.** ESPN 403s unrecognized
 agents that carry a `name/version` token, so any change to that string is a
 live risk; `gridiron-analytics (personal project)` was verified 3/3 before the
 swap.
@@ -335,5 +335,5 @@ swap.
   document scrolls wider than the viewport. Run it after layout changes. It now
   covers `/fantasy/week` in all three views; last run was clean.
 - The user's standing instruction: **do not ask permission, just execute.**
-- Validate every calculation against recognisable reference rankings before
+- Validate every calculation against recognizable reference rankings before
   presenting it. This is the lesson the WAR rebuild came from.

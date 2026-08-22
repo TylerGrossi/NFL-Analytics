@@ -63,6 +63,9 @@ PBP_COLUMNS = [
     "field_goal_attempt", "field_goal_result", "kick_distance",
     "punt_attempt", "penalty", "special", "aborted_play", "play_deleted",
     "shotgun", "no_huddle",
+    # Where a run went: left/middle/right and end/tackle/guard. Needed to put
+    # a carry behind a particular blocker.
+    "run_location", "run_gap",
     "epa", "wp", "wpa", "vegas_wp", "vegas_wpa", "def_wp",
     "success", "cpoe", "xpass", "pass_oe", "qb_epa", "xyac_epa",
     "air_epa", "yac_epa",

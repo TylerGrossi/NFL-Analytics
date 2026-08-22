@@ -33,13 +33,13 @@ The projection is fit per position on 2006–2025. Four inputs, each measured be
 | Input | What the data says |
 |---|---|
 | Last season's PPG | Strongest single input, r ≈ 0.77 to the following year |
-| Sample-size regression | Rates shrunk toward the positional mean by `games / (games + 4)`; k = 4 minimises error |
+| Sample-size regression | Rates shrunk toward the positional mean by `games / (games + 4)`; k = 4 minimizes error |
 | A second prior season | The biggest addition — R² 0.588 → 0.632 |
 | Expected points | Real but small — R² 0.588 → 0.595, so about a third of the weight of actual |
 
 Two findings worth stating plainly. **Expected fantasy points are not more predictive of next season
 than the points actually scored** — they are essentially tied, which is the opposite of the usual
-claim; xFP earns its place as a small correction, not as a replacement. And **ageing is sharply
+claim; xFP earns its place as a small correction, not as a replacement. And **aging is sharply
 position-dependent**: backs start losing ground at 26 and shed more than two points per game a year
 by 32, receivers hold to about 26, while tight ends and quarterbacks decline gently and late.
 
@@ -60,7 +60,7 @@ the same handful of features recur. Four of them are built here from data alread
   pick. Pricing against the worst player who still gets drafted — standard auction VBD — puts the
   top bid at $46 in a 12-team $200 league and $70 at $300, which is where they actually clear.
 - **Strength of schedule**, by position, built the conventional way: fantasy points allowed per game
-  by each defence, ranked 1–32, averaged across each club's opponents. Playoff weeks (15–17) are
+  by each defense, ranked 1–32, averaged across each club's opponents. Playoff weeks (15–17) are
   ranked separately, because a club can have an easy September and a brutal December.
 - **Bye weeks**, derived from the schedule rather than a second source.
 - **Availability**, the share of games played over three seasons, which flags the injury history the
@@ -76,7 +76,7 @@ December it is almost purely this season.
 
 **The matchup adjustment is fit rather than assumed, and it is small.** The standard construction
 multiplies a projection by the opponent's fantasy-points-allowed index, which asserts the entire
-spread between defences survives into this year and into this week. Regressing 48,103 player weeks
+spread between defenses survives into this year and into this week. Regressing 48,103 player weeks
 on the opponent's prior-season index — holding the week being predicted out of the player's own
 rate, so the baseline cannot see the answer — gives a coefficient nowhere near 1:
 
@@ -91,7 +91,7 @@ rather than manufacturing confidence. Defensive generosity also only carries yea
 
 Schedule difficulty is the one to be careful with, and the page says so. The gap between the easiest
 and hardest schedule is 7.7% of league-average points for backs and about 15% for receivers and
-quarterbacks — and it is built entirely on last season's defences, which carry year to year at only
+quarterbacks — and it is built entirely on last season's defenses, which carry year to year at only
 0.34. Expect roughly a third of that spread to survive. It is a tiebreaker, not a reason to move
 anyone up a round.
 

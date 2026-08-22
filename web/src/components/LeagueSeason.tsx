@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import type { League, LeagueTeam, Move, WeekScore } from "@/lib/leagues";
 import type { WeekProj } from "@/lib/queries";
-import { optimiseLineup, slotAccepts, type Candidate } from "@/lib/fantasyMath";
+import { optimizeLineup, slotAccepts, type Candidate } from "@/lib/fantasyMath";
 import { toCandidates } from "@/components/LeagueTools";
 import { num, pct, signed } from "@/lib/format";
 
@@ -152,7 +152,7 @@ export function tradeTargets(
   limit = 15
 ) {
   const roster = toCandidates(mine, proj);
-  const base = optimiseLineup(roster, league.slots).total;
+  const base = optimizeLineup(roster, league.slots).total;
 
   const out: { player: Candidate; from: LeagueTeam; gain: number }[] = [];
   for (const other of league.teams) {
@@ -161,7 +161,7 @@ export function tradeTargets(
       if (cand.proj === null) continue;
       // Only worth testing if some slot could actually take him.
       if (!league.slots.some((sl) => slotAccepts(sl, cand.position))) continue;
-      const withHim = optimiseLineup([...roster, cand], league.slots).total;
+      const withHim = optimizeLineup([...roster, cand], league.slots).total;
       const gain = withHim - base;
       if (gain > 0.05) out.push({ player: cand, from: other, gain });
     }

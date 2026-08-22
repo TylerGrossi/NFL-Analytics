@@ -20,6 +20,11 @@ import { useEffect } from "react";
  * text, so it never becomes a header you can click. A cell can override what
  * it sorts on with `data-sort`, which is how a column that displays one thing
  * and orders by another (a date, a record) stays correct.
+ *
+ * A whole table opts out with `data-nosort`. That is for a table which is not
+ * a list at all — the two-row season-and-career strip on a player card has
+ * nothing to order, and a sort caret on it only invites a click that does
+ * nothing a reader wanted.
  */
 
 const SORTED = "data-sortable-wired";
@@ -45,6 +50,7 @@ function cellText(row: HTMLTableRowElement, index: number): string {
 
 function enhance(table: HTMLTableElement) {
   if (table.getAttribute(SORTED)) return;
+  if (table.hasAttribute("data-nosort")) return;
 
   const head = table.tHead;
   const body = table.tBodies[0];

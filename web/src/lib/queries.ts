@@ -104,6 +104,27 @@ export const getTeamHistory = cache(async (team: string) => {
   );
 });
 
+/**
+ * Career expected points added for one player.
+ *
+ * EPA is the site's headline figure, so this is the number a player card leads
+ * with. It is a plain sum of his regular-season lines — the pipeline writes the
+ * table so the sum is not re-run on every request.
+ */
+export const getPlayerCareerEpa = cache(async (playerId: string) => {
+  return queryOne<CareerEpaRow>(
+    `select * from read_parquet('${table("epa_career")}') where player_id = $1`,
+    [playerId]
+  );
+});
+
+export type CareerEpaRow = {
+  player_id: string; career_epa: number; career_plays: number; seasons: number;
+  first_season: number; last_season: number;
+  epa_passing: number; epa_rushing: number; epa_receiving: number;
+  best_season_epa: number; best_season: number; epa_per_season: number;
+};
+
 /** Career WAR total for one player. */
 export const getPlayerCareerWar = cache(async (playerId: string) => {
   return queryOne<{
@@ -957,7 +978,7 @@ export type CapRow = {
   cap_hit: number; base_salary: number; prorated_bonus: number; guaranteed_salary: number;
   dead_if_cut: number; cut_savings: number; restructure_savings: number;
   years_remaining: number; apy: number; value: number; guaranteed: number;
-  war: number | null; par: number | null; name: string | null; pos_group: string | null;
+  epa: number | null; name: string | null; pos_group: string | null;
   depth_pos: string | null; depth_rank: number | null;
   status: string | null; practice: string | null; p_play: number | null; injury: string | null;
 };
@@ -985,16 +1006,21 @@ export const getCapSummary = cache(async (season: number): Promise<CapSummary[]>
  * be worse than showing nothing.
  */
 export const getCapTable = cache(
-  async (team: string, season: number, warSeason: number): Promise<CapRow[]> => {
+  async (team: string, season: number, epaSeason: number): Promise<CapRow[]> => {
     return query<CapRow>(
-      `select c.*, w.war, w.par, w.name, w.pos_group,
+      `select c.*, w.epa, w.name, w.pos_group,
               d.depth_pos, d.depth_rank,
               i.status, i.practice, i.p_play, i.injury
        from read_parquet('${table("contracts")}') c
        left join (
-         select player_id, war, par, name, pos_group
-         from read_parquet('${table("war_season")}')
-         where season = $3
+         select player_id,
+                case when coalesce(sum(dropbacks), 0) + coalesce(sum(rush_plays), 0)
+                          + coalesce(sum(target_plays), 0) > 0
+                     then sum(total_epa) end as epa,
+                any_value(player_display_name) as name, any_value(pos_group) as pos_group
+         from read_parquet('${table("player_season")}')
+         where season = $3 and season_type = 'REG'
+         group by player_id
        ) w on w.player_id = c.player_id
        left join (
          select player_id, depth_pos, depth_rank
@@ -1008,7 +1034,7 @@ export const getCapTable = cache(
        ) i on i.player_id = c.player_id
        where c.team = $1 and c.season = $2
        order by c.cap_hit desc`,
-      [team.toUpperCase(), season, warSeason]
+      [team.toUpperCase(), season, epaSeason]
     );
   }
 );
@@ -1016,7 +1042,7 @@ export const getCapTable = cache(
 export type DepthChartRow = {
   player_id: string; name: string | null; headshot: string | null;
   depth_pos: string; depth_rank: number; depth_as_of: string;
-  par: number | null; pos_group: string | null;
+  epa: number | null; pos_group: string | null;
   cap_hit: number | null; contract_pos: string | null;
   status: string | null; practice: string | null; p_play: number | null; injury: string | null;
 };
@@ -1029,20 +1055,23 @@ export type DepthChartRow = {
  * when it asks who inherits the job after a cut.
  */
 export const getTeamDepth = cache(
-  async (team: string, season: number, warSeason: number, maxRank = 4):
+  async (team: string, season: number, epaSeason: number, maxRank = 4):
     Promise<DepthChartRow[]> => {
     return query<DepthChartRow>(
       `select d.player_id, p.name, p.headshot,
               d.depth_pos, d.depth_rank, d.depth_as_of,
-              w.par, w.pos_group,
+              w.epa, w.pos_group,
               c.cap_hit, c.position as contract_pos,
               i.status, i.practice, i.p_play, i.injury
        from read_parquet('${table("depth_charts")}') d
        left join read_parquet('${table("players")}') p on p.player_id = d.player_id
        left join (
-         select player_id, par, pos_group
-         from read_parquet('${table("war_season")}')
-         where season = $3
+         select player_id, case when coalesce(sum(dropbacks), 0) + coalesce(sum(rush_plays), 0)
+                          + coalesce(sum(target_plays), 0) > 0
+                     then sum(total_epa) end as epa, any_value(pos_group) as pos_group
+         from read_parquet('${table("player_season")}')
+         where season = $3 and season_type = 'REG'
+         group by player_id
        ) w on w.player_id = d.player_id
        left join (
          select player_id, cap_hit, position
@@ -1056,26 +1085,30 @@ export const getTeamDepth = cache(
        ) i on i.player_id = d.player_id
        where d.team = $1 and d.season = $2 and d.depth_rank <= ${Number(maxRank)}
        order by d.depth_pos, d.depth_rank`,
-      [team.toUpperCase(), season, warSeason]
+      [team.toUpperCase(), season, epaSeason]
     );
   }
 );
 
-/** Best and worst value contracts league-wide: PAR against cap dollars. */
+/** Best and worst value contracts league-wide: EPA against cap dollars. */
 export const getSurplusValue = cache(
-  async (season: number, warSeason: number, limit = 20) => {
+  async (season: number, epaSeason: number, limit = 20) => {
     return query<Record<string, string | number | null>>(
-      `select c.player, c.position, c.team, c.cap_hit, c.apy, w.war, w.par,
-              w.par / nullif(c.cap_hit, 0) as par_per_million
+      `select c.player, c.position, c.team, c.cap_hit, c.apy, w.epa,
+              w.epa / nullif(c.cap_hit, 0) as epa_per_million
        from read_parquet('${table("contracts")}') c
        join (
-         select player_id, war, par, name from read_parquet('${table("war_season")}')
-         where season = $2
+         select player_id, case when coalesce(sum(dropbacks), 0) + coalesce(sum(rush_plays), 0)
+                          + coalesce(sum(target_plays), 0) > 0
+                     then sum(total_epa) end as epa
+         from read_parquet('${table("player_season")}')
+         where season = $2 and season_type = 'REG'
+         group by player_id
        ) w on w.player_id = c.player_id
-       where c.season = $1 and c.cap_hit >= 2 and w.par is not null
-       order by par_per_million desc
+       where c.season = $1 and c.cap_hit >= 2 and w.epa is not null
+       order by epa_per_million desc
        limit ${Number(limit)}`,
-      [season, warSeason]
+      [season, epaSeason]
     );
   }
 );
@@ -1131,7 +1164,7 @@ export type DraftPick = {
   forty: number | null; bench: number | null; vertical: number | null;
   broad_jump: number | null; cone: number | null; shuttle: number | null;
   headshot: string | null; pos_now: string | null;
-  career_war: number | null; career_par: number | null;
+  career_war: number | null; career_par: number | null; career_epa: number | null;
   pick_expected: number | null; over_expected: number | null;
 };
 
@@ -1820,9 +1853,9 @@ export const getWeekPlayers = cache(
 
 export type PickValueRow = {
   pick: number; n: number;
-  war: number; av: number;
-  war_relative: number; av_relative: number;
-  raw_war: number; raw_av: number;
+  epa: number; av: number;
+  epa_relative: number; av_relative: number;
+  raw_epa: number; raw_av: number;
 };
 
 /** Expected career return by pick, in both currencies. */
@@ -1837,7 +1870,7 @@ export const getPickCurve = cache(async (): Promise<PickValueRow[]> => {
 });
 
 export type PickMixRow = {
-  band: string; position: string; n: number; war: number; av: number;
+  band: string; position: string; n: number; epa: number; av: number;
 };
 
 /**
@@ -1850,7 +1883,7 @@ export const getPickMix = cache(async (band = "1-10"): Promise<PickMixRow[]> => 
   try {
     return await query<PickMixRow>(
       `select * from read_parquet('${table("trade_pick_mix")}')
-       where band = $1 order by war desc`,
+       where band = $1 order by epa desc`,
       [band]
     );
   } catch {
@@ -1859,17 +1892,28 @@ export const getPickMix = cache(async (band = "1-10"): Promise<PickMixRow[]> => 
 });
 
 export type AgingRow = {
-  pos_group: string; age: number; delta: number; n: number; rel_war: number;
+  pos_group: string; age: number; delta: number; n: number; rel_epa: number;
 };
+
+/**
+ * Position groups the curve can price at all.
+ *
+ * The curve is fit in EPA, which is charged to whoever touched the ball. A
+ * lineman or a defender has none of his own, so the all-position fallback below
+ * would hand him an offensive curve under his own label — worse than showing
+ * nothing, which is what he gets instead.
+ */
+const AGING_GROUPS = new Set(["QB", "RB", "WR", "TE"]);
 
 /** The aging curve for one position group, falling back to all positions. */
 export const getAgingCurve = cache(
   async (posGroup: string | null): Promise<AgingRow[]> => {
+    if (!posGroup || !AGING_GROUPS.has(posGroup)) return [];
     try {
       const rows = await query<AgingRow>(
         `select * from read_parquet('${table("trade_aging")}')
          where pos_group = $1 order by age`,
-        [posGroup ?? "ALL"]
+        [posGroup]
       );
       if (rows.length >= 5) return rows;
       return await query<AgingRow>(
@@ -2159,3 +2203,124 @@ export const runSplitBaseline = cache(
     );
   }
 );
+
+// --------------------------------------------------------------- visuals
+
+export type GapRow = {
+  season: number;
+  team: string;
+  side: string;
+  gap: string;
+  plays: number;
+  epa_per_rush: number;
+  success: number;
+  yards_per_rush: number;
+  stuff_rate: number;
+  explosive_rate: number;
+  touchdowns: number;
+  share: number;
+};
+
+/** Run-gap splits for one season and side, every team. */
+export const getGapSplits = cache(
+  async (season: number, side: "offense" | "defense"): Promise<GapRow[]> => {
+    return query<GapRow>(
+      `select * from read_parquet('${table("gap_splits")}')
+       where season = $1 and side = $2
+       order by team, gap`,
+      [season, side]
+    );
+  }
+);
+
+/** Seasons the gap store actually covers — participation-era only. */
+export const getGapSeasons = cache(async (): Promise<number[]> => {
+  const rows = await query<{ season: number }>(
+    `select distinct season from read_parquet('${table("gap_splits")}') order by season desc`
+  );
+  return rows.map((r) => Number(r.season));
+});
+
+export type ScatterPoint = {
+  id: string;
+  name: string;
+  team: string;
+  position?: string;
+} & Record<string, number | string | null>;
+
+/**
+ * One row per team for the scatter, carrying every numeric column the picker
+ * offers. Sent to the client whole: it is 32 rows, and shipping it once beats a
+ * round trip every time an axis changes.
+ */
+export const getTeamScatter = cache(async (season: number): Promise<ScatterPoint[]> => {
+  return query<ScatterPoint>(
+    `select team as id, team as name, team, * exclude (team)
+     from read_parquet('${table("team_season")}')
+     where season = $1`,
+    [season]
+  );
+});
+
+/**
+ * The same for players, held to those who cleared the usage floor. Without the
+ * filter this is nine thousand rows of mostly one-snap seasons, and a scatter
+ * of those is a cloud with the answer hidden in it.
+ */
+export const getPlayerScatter = cache(
+  async (season: number, positions: string[]): Promise<ScatterPoint[]> => {
+    const list = positions.map((p) => `'${p.replace(/'/g, "")}'`).join(", ");
+    return query<ScatterPoint>(
+      `select player_id as id, player_display_name as name,
+              recent_team as team, position, * exclude (player_id, player_display_name, recent_team, position)
+       from read_parquet('${table("player_season")}')
+       where season = $1 and qualified and position in (${list})`,
+      [season]
+    );
+  }
+);
+
+export type SnapWeekRow = {
+  season: number;
+  week: number;
+  team: string;
+  player: string;
+  player_id: string | null;
+  position: string;
+  pos_group: string;
+  off_snaps: number | null;
+  off_pct: number | null;
+  def_snaps: number | null;
+  def_pct: number | null;
+  st_snaps: number | null;
+  st_pct: number | null;
+};
+
+/** Every snap row for one team-season, one row per player per week. */
+export const getSnapWeeks = cache(
+  async (season: number, team: string): Promise<SnapWeekRow[]> => {
+    return query<SnapWeekRow>(
+      `select * from read_parquet('${table("snap_week")}')
+       where season = $1 and team = $2
+       order by pos_group, player, week`,
+      [season, team]
+    );
+  }
+);
+
+export const getSnapSeasons = cache(async (): Promise<number[]> => {
+  const rows = await query<{ season: number }>(
+    `select distinct season from read_parquet('${table("snap_week")}') order by season desc`
+  );
+  return rows.map((r) => Number(r.season));
+});
+
+/** Teams that actually played that season, from the snap store itself. */
+export const getSnapTeams = cache(async (season: number): Promise<string[]> => {
+  const rows = await query<{ team: string }>(
+    `select distinct team from read_parquet('${table("snap_week")}')
+     where season = $1 order by team`,
+    [season]
+  );
+  return rows.map((r) => String(r.team));
+});

@@ -96,12 +96,32 @@ export function divergingColor(v: number | null | undefined, max: number): strin
 /**
  * Betting line for one side of a game.
  *
- * nflverse stores `spread_line` as the points the *home* team is favoured by,
- * so a home favourite is positive. A posted line states the favourite as a
+ * nflverse stores `spread_line` as the points the *home* team is favored by,
+ * so a home favorite is positive. A posted line states the favorite as a
  * negative number, which is the opposite sign, and quietly printing the stored
- * value labels every favourite as an underdog.
+ * value labels every favorite as an underdog.
  */
 export function line(spreadLine: number | null, forHome = true): string {
   if (spreadLine === null || Number.isNaN(spreadLine)) return "—";
   return signed(forHome ? -spreadLine : spreadLine, 1);
+}
+
+/**
+ * A fourth-down call, as a label rather than a stored token.
+ *
+ * The store keeps `punt` / `go` / `fg` lowercase because they are keys. Printed
+ * straight into a table they were the only uncapitalized words on the page, and
+ * "fg" is an abbreviation that should be set as one.
+ */
+export function fourthCall(value: string | null | undefined): string {
+  switch (String(value ?? "").toLowerCase()) {
+    case "punt":
+      return "Punt";
+    case "go":
+      return "Go";
+    case "fg":
+      return "FG";
+    default:
+      return value ? String(value) : "—";
+  }
 }

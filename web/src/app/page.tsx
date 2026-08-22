@@ -1,8 +1,6 @@
 import Link from "next/link";
 import {
-  Deck,
   Footnote,
-  PageHead,
   Panel,
   RankChip,
   SectionRule,
@@ -80,12 +78,6 @@ export default async function HomePage() {
           </Footnote>
         </>
       )}
-
-      <PageHead>The NFL, counted from the play up.</PageHead>
-      <Deck>
-        {int(manifest.coverage?.plays)} play-by-play records, rebuilt nightly into team efficiency,
-        player value and win probability.
-      </Deck>
 
       {/* Equal tracks, and the same team-mark size in both tables, so the two
           columns end level instead of leaving a hole down the right of the page. */}

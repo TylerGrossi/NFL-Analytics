@@ -23,7 +23,7 @@ from .pbp import scrimmage
 # The first season in which every WAR role has a source behind it.
 FULL_COVERAGE_SEASON = 2020
 
-# Defence is fit alongside the offensive roles; the label map covers both.
+# Defense is fit alongside the offensive roles; the label map covers both.
 ALL_ROLE_LABELS = {
     **war_model.ROLE_LABEL,
     "def": "defense",

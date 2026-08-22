@@ -12,7 +12,7 @@ import type { ReactElement } from "react";
  *
  * **No club marks.** Team logos and player headshots belong to the clubs and
  * the NFL — the footer says so. A card that leaves this site and lands
- * somewhere else must carry only what is ours to publish: team *colours*,
+ * somewhere else must carry only what is ours to publish: team *colors*,
  * abbreviations, and figures we computed. That is also why the accent stripe
  * does the work a logo would.
  *
@@ -39,7 +39,7 @@ export const OG = {
   neg: "#a3392a",
 } as const;
 
-function normalise(hex: string | null | undefined): string | null {
+function normalize(hex: string | null | undefined): string | null {
   if (!hex || !/^#?[0-9a-f]{6}$/i.test(hex)) return null;
   return hex.startsWith("#") ? hex : `#${hex}`;
 }
@@ -52,7 +52,7 @@ function luminance(hex: string): number {
 }
 
 /**
- * A stripe colour that actually reads.
+ * A stripe color that actually reads.
  *
  * The footer bar is navy, so a club whose primary is also navy — Seattle, the
  * Giants, Dallas — produced a stripe that vanished into it and a card that
@@ -63,8 +63,8 @@ export function safeColor(
   hex: string | null | undefined,
   alt?: string | null
 ): string {
-  const primary = normalise(hex);
-  const secondary = normalise(alt);
+  const primary = normalize(hex);
+  const secondary = normalize(alt);
   const TOO_DARK = 60;
   if (primary && luminance(primary) >= TOO_DARK) return primary;
   if (secondary && luminance(secondary) >= TOO_DARK) return secondary;

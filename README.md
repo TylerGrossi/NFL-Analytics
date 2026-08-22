@@ -100,7 +100,7 @@ python -m nflx.cli inspect team_season    # print a built table
 | `fantasy_season.parquet` | fantasy points, value over replacement, expected points, weekly spread |
 | `fantasy_replacement.parquet` | replacement level per position per season |
 | `fantasy_draft.parquet` | next-season projections, consensus rank in six formats, schedule, bye, availability |
-| `fantasy_defense.parquet` | fantasy points allowed per game by each defence to each position |
+| `fantasy_defense.parquet` | fantasy points allowed per game by each defense to each position |
 | `fantasy_sos.parquet` | schedule difficulty per club per position, full season and playoff weeks |
 | `fantasy_byes.parquet` | bye week per club |
 | `fantasy_availability.parquet` | share of games played over the last three seasons |

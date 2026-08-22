@@ -10,14 +10,14 @@ import { useRef, useState, type ReactNode } from "react";
  * runtime to coax an image out of. Three things do have to be handled, and
  * each of them is silent if you get it wrong:
  *
- * 1. **CSS custom properties do not survive.** The SVG is coloured with
+ * 1. **CSS custom properties do not survive.** The SVG is colored with
  *    `var(--c1)`, `var(--ink-3)` and so on. Those resolve against the document,
- *    and a serialised SVG loaded into an `Image` has no document — every line
- *    comes out black. So the computed colour of every node is copied onto the
- *    clone as a literal before serialising.
+ *    and a serialized SVG loaded into an `Image` has no document — every line
+ *    comes out black. So the computed color of every node is copied onto the
+ *    clone as a literal before serializing.
  * 2. **Transparent background renders black.** Canvas starts transparent and
  *    most viewers composite that onto black, so the export paints the panel
- *    colour first.
+ *    color first.
  * 3. **Web fonts are not embedded.** Rather than inline a font file, the clone
  *    falls back to a generic stack; the numbers stay tabular enough to read.
  *

@@ -1,4 +1,4 @@
-import { Deck, Panel, SectionRule } from "@/components/ui";
+import { Panel, SectionRule } from "@/components/ui";
 import { getManifest, getMarketValidation, getWarValidation } from "@/lib/queries";
 import { num, pct } from "@/lib/format";
 import type { ReactNode } from "react";
@@ -28,16 +28,28 @@ const ABBREVIATIONS: Entry[] = [
     def: "Points the play changed the drive's expected value by. A first-down conversion is worth more than the yards say; a sack on second and long is worth less.",
   },
   {
+    abbr: "Total EPA",
+    term: "Season expected points added",
+    where: "players, draft, cap",
+    def: "A player's own EPA, summed over his passing, rushing and receiving plays. This is the site's headline figure for an individual — it is charged to whoever touched the ball, so linemen and defenders score none of it and are read on charted production instead.",
+  },
+  {
+    abbr: "Career EPA",
+    term: "Career expected points added",
+    where: "players, draft",
+    def: "The same figure summed across every regular season on record. EPA adds up in a way a rate stat does not, so there is nothing fitted here — a career number means what a season number means over a longer window.",
+  },
+  {
     abbr: "Net",
     term: "Net rating",
     where: "standings, teams",
-    def: "Opponent-adjusted offensive EPA per play minus the same on defence. The single number the site ranks clubs by.",
+    def: "Opponent-adjusted offensive EPA per play minus the same on defense. The single number the site ranks clubs by.",
   },
   {
     abbr: "Off / Def",
-    term: "Offence and defence rank",
+    term: "Offense and defense rank",
     where: "standings, teams",
-    def: "Rank of 32 on opponent-adjusted EPA per play. Rank 1 is the best offence and the best defence respectively — a defensive rank is already signed so that low is good.",
+    def: "Rank of 32 on opponent-adjusted EPA per play. Rank 1 is the best offense and the best defense respectively — a defensive rank is already signed so that low is good.",
   },
   {
     abbr: "xWins",
@@ -78,13 +90,13 @@ const ABBREVIATIONS: Entry[] = [
   {
     abbr: "WAR",
     term: "Wins above replacement",
-    where: "war, players",
-    def: "Value in wins over a freely available player at the same position.",
+    where: "war",
+    def: "Value in wins over a freely available player at the same position. It covers every role including blocking and coverage, which EPA cannot, and it lives on its own page — the rest of the site leads with EPA.",
   },
   {
     abbr: "PAR",
     term: "Points above replacement",
-    where: "war, players",
+    where: "war",
     def: "The same figure before conversion to wins. PAR is what the model computes; WAR is PAR divided by the cost of a win.",
   },
   {
@@ -187,7 +199,6 @@ export default async function GlossaryPage() {
     <>
       <SectionRule>Glossary</SectionRule>
 
-      <Deck>Every abbreviation, definition and formula the site uses, with the fitted constants.</Deck>
 
       <Panel title="Abbreviations">
         <div className="scroll-x">
@@ -240,7 +251,7 @@ export default async function GlossaryPage() {
             <p>
               EPA prices a play by the drive state it creates, so it already accounts for down,
               distance and field position. It does not separate the players involved — an
-              offence&apos;s number contains its line, its quarterback and its receivers together.
+              offense&apos;s number contains its line, its quarterback and its receivers together.
               That separation is what WAR attempts, and why WAR is a harder problem than team
               efficiency.
             </p>
@@ -382,7 +393,7 @@ export default async function GlossaryPage() {
               Playoff odds simulate the remaining schedule {(10000).toLocaleString("en-US")} times
               and seed every simulated season through the same tiebreaker tree. Ratings are held
               fixed across a simulated season, so injuries, trades and in-season improvement are not
-              modelled.
+              modeled.
             </p>
           </div>
         </Panel>
@@ -407,8 +418,8 @@ export default async function GlossaryPage() {
             </p>
             <p>
               <b>Sign convention.</b> nflverse stores <code>spread_line</code> as the points the
-              home club is favoured by, so a home favourite is positive. A posted line states the
-              favourite as a negative number.
+              home club is favored by, so a home favorite is positive. A posted line states the
+              favorite as a negative number.
             </p>
           </div>
         </Panel>
@@ -467,7 +478,7 @@ export default async function GlossaryPage() {
           <div className="notes-body one-col">
             <p>
               Going for it is the conversion rate times win probability with a fresh set of downs,
-              plus the failure case where the defence takes over at the spot. Kicking and punting
+              plus the failure case where the defense takes over at the spot. Kicking and punting
               are valued the same way through their own outcomes. The conversion model is fit on
               third and fourth down snaps pooled, because fourth down attempts alone are a biased
               sample of situations coaches already liked.

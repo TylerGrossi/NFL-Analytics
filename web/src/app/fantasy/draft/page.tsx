@@ -216,11 +216,11 @@ export default async function FantasyDraftPage() {
             Every injury report from 2018 on, joined to whether that player actually took a snap
             that week — so these are observed rates, not rules of thumb. The lesson is that practice
             participation carries more than the game designation does: a Questionable player who
-            practised fully plays <b className="text-ink-2">79%</b> of the time, the same
+            practiced fully plays <b className="text-ink-2">79%</b> of the time, the same
             designation with no practice at all <b className="text-ink-2">46%</b>. Quoting one
             number for &ldquo;Questionable&rdquo; throws away a thirty-point swing. Note too that a
             player on the report with no designation is not healthy — he plays 93%, and 77% if he
-            did not practise. Only players whose id demonstrably bridges to the snap data that
+            did not practice. Only players whose id demonstrably bridges to the snap data that
             season are counted; otherwise a failed id match looks exactly like a player who sat out
             and every rate is biased down. Small print: this says whether he plays, not how well.
           </div>
@@ -280,7 +280,7 @@ export default async function FantasyDraftPage() {
           <div className="px-4 py-2.5 border-t border-rule text-[11px] text-ink-3 leading-relaxed">
             Worth less than it looks. The gap between the easiest and hardest schedule is 7.7% of
             league-average points for backs and about 15% for receivers and quarterbacks — and that
-            is before allowing for the fact that it is built entirely on last season&apos;s defences,
+            is before allowing for the fact that it is built entirely on last season&apos;s defenses,
             which carry year to year at only 0.34. Expect roughly a third of the spread above to
             survive into the coming season. It is a tiebreaker between players you already rate
             similarly, not a reason to move anyone up a round.

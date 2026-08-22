@@ -7,9 +7,9 @@ is worth the rest of the year, and who on the wire is being under-owned.
 **How much a matchup is actually worth, measured rather than assumed.** The
 convention in fantasy tooling is to multiply a projection by the opponent's
 fantasy-points-allowed index, which asserts that the whole spread between
-defences survives into this year and into this week. It does not, twice over:
+defenses survives into this year and into this week. It does not, twice over:
 
-- A defence's generosity carries to the next season at a slope of about 0.23
+- A defense's generosity carries to the next season at a slope of about 0.23
   (QB 0.27, RB 0.30, WR 0.23, TE 0.17 over 2015–2025).
 - Regressing 48,103 player weeks of actual scoring on the opponent's prior-year
   index — holding out the week being predicted from the player's own rate —
@@ -63,8 +63,8 @@ def _weekly(season: int) -> pl.DataFrame:
 
     The regular-season filter matters more than it looks. The feed carries
     postseason rows under the same week numbers, and only fourteen clubs play
-    them, so leaving them in gives a handful of defences extra games in a
-    "points allowed per game" average that every other defence is judged
+    them, so leaving them in gives a handful of defenses extra games in a
+    "points allowed per game" average that every other defense is judged
     against.
     """
     try:
@@ -78,7 +78,7 @@ def _weekly(season: int) -> pl.DataFrame:
 
 
 def _points_allowed(season: int) -> pl.DataFrame:
-    """Fantasy points each defence gave up per game, indexed to the position."""
+    """Fantasy points each defense gave up per game, indexed to the position."""
     w = _weekly(season)
     if w.height == 0 or "opponent_team" not in w.columns:
         return pl.DataFrame()

@@ -291,7 +291,7 @@ def seed_conference(conf: str, records: dict[str, TeamSeason]) -> list[str]:
 
 
 def _order_pool(pool: list[str], records: dict[str, TeamSeason], division_pool: bool) -> list[str]:
-    """Repeatedly take the best club, honouring the one-per-division rule."""
+    """Repeatedly take the best club, honoring the one-per-division rule."""
     remaining = list(pool)
     ordered: list[str] = []
 

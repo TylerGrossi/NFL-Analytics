@@ -151,7 +151,7 @@ export function DraftBoard({ rows, rankedOn }: { rows: DraftBoardRow[]; rankedOn
     // Where this board and the room disagree as a matter of method rather than
     // opinion. Measured over the top 100 only: deeper than that the two rank
     // scales stop being comparable, because consensus also ranks kickers and
-    // defences while this board does not.
+    // defenses while this board does not.
     const bias: Record<string, { mean: number; n: number }> = {};
     for (const p of ["QB", "RB", "WR", "TE"]) {
       const pool = withVor

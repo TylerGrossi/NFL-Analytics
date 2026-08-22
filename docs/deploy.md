@@ -125,7 +125,7 @@ Honest list. None of this has run against a real deployment.
 - **Per-page latency with remote reads.** Individual queries measured well, but
   several routes fire multiple queries and some fan out with `Promise.all`.
   `db.ts` funnels queries through a promise chain because the native binding is
-  not safe for concurrent reads on one connection — so those fan-outs serialise,
+  not safe for concurrent reads on one connection — so those fan-outs serialize,
   and remote latency stacks where it previously did not. Worth measuring per
   route before trusting it.
 - **Cold-start cost** of loading the binding plus the first `httpfs` read.

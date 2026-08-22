@@ -156,7 +156,7 @@ Non-negotiables that make it trustworthy rather than a gimmick:
 - Read-only DuckDB connection, a hard row/scan cap, statement timeout, and a
   whitelist of tables. Never interpolate model output into a string that touches
   anything but a sandboxed reader.
-- Cache generated SQL by normalised question text — most questions repeat.
+- Cache generated SQL by normalized question text — most questions repeat.
 
 **Gap: total for NFL.** And the architecture already carries it: DuckDB over parquet
 means an arbitrary filter costs nothing.
@@ -244,7 +244,7 @@ email/RSS: biggest WPA plays of the week, largest movers in opponent-adjusted EP
 the worst 4th down decisions by cumulative win probability surrendered, the
 playoff-odds swings, the fantasy waiver adds.
 
-Every number is already computed. This is assembly, not modelling — and it is the
+Every number is already computed. This is assembly, not modeling — and it is the
 recurrence mechanic the site lacks.
 
 **Effort: M.** **Note:** write it as data with sentences around it, not as prose. The
@@ -282,7 +282,7 @@ clubs adapted and which didn't. Refresh weekly.
 
 **Gap: total, and time-sensitive.** This is a launch-week story with a season-long
 tail. **Effort: S–M.** **Caveat:** the rule changed for 2026, so the pre-2026
-comparison must be labelled as a different regime, the same way the 2023 formation
+comparison must be labeled as a different regime, the same way the 2023 formation
 vendor change is already handled.
 
 ### 4.3 Player comps and aging curves — *aging half shipped 2026-08-16*
@@ -378,7 +378,7 @@ the data outlives any page.
   by out-of-sample predictiveness — "which of these numbers should you actually
   believe". Deeply on-brand for a site whose credibility rests on published
   backtests, and nobody else would dare. **S–M.**
-- **Rest, travel and schedule spots.** Miles travelled, time zones crossed, days of
+- **Rest, travel and schedule spots.** Miles traveled, time zones crossed, days of
   rest, and whether any of it survives a proper control. Likely a null result —
   publish it anyway. **S.**
 - **Historical era pages.** The play-by-play goes to 1999. Era-adjusted leaderboards,
@@ -406,15 +406,15 @@ the data outlives any page.
 
 ## 7. Things to deliberately not do
 
-- **Don't add prediction confidence theatre.** Intervals were removed from WAR at the
+- **Don't add prediction confidence theater.** Intervals were removed from WAR at the
   user's request (`HANDOFF.md` §1). Don't reintroduce them anywhere as decoration.
 - **Don't ship picks.** A model line with a published backtest is a credible product;
   a "best bet of the day" is a different site with a different reputation.
-- **Don't embed ESPN media.** The current linking behaviour is deliberate and
+- **Don't embed ESPN media.** The current linking behavior is deliberate and
   documented — bandwidth, advertising, per-country licensing.
 - **Don't put prose above data.** `web/audit-text.mjs` enforces it; under ~25 visible
   words and dataTop under 450px per route.
-- **Don't ship any metric without checking it against recognisable reference
+- **Don't ship any metric without checking it against recognizable reference
   rankings first.** This is the lesson the WAR rebuild came from and it is the single
   most important rule in the project.
 
@@ -426,8 +426,8 @@ the data outlives any page.
 probability chart, aging curves, pick value curves and player weekly charts.
 
 **§3.2 Open Graph cards — done (2026-08-16).** Home, `/war`, player, team and game routes, from a
-  shared shell in `web/src/lib/og.tsx`. Team colours only, no club marks; stripe falls back to the
-  secondary colour when the primary is too dark to read against the navy footer. `metadataBase` is
+  shared shell in `web/src/lib/og.tsx`. Team colors only, no club marks; stripe falls back to the
+  secondary color when the primary is too dark to read against the navy footer. `metadataBase` is
   wired via `NEXT_PUBLIC_SITE_URL`. Download-PNG shipped alongside.
 - **§3.1 `/market` — done (2026-08-16).** `build/market.py` walk-forwards the projection over
   5,199 games from 2006, grading against the closing line and writing `market_games.parquet`,
@@ -454,7 +454,7 @@ agents who score well against *your* matchup), **Compare**, **Lineup Optimizer**
 analysis, Cheat Sheets, and a natural-language Agent.
 
 **Shipped 2026-08-16:** the Sleeper connect flow (username → league picker), matchup win
-probability with a margin distribution, the lineup optimiser with swap costs, and the streamer
+probability with a margin distribution, the lineup optimizer with swap costs, and the streamer
 finder. All four live on `/fantasy/league`. The variance model they rest on is new —
 `fantasy_variance.parquet`, `sd = a + b × projection` per position, fit on 38,758 player weeks.
 
@@ -469,7 +469,7 @@ supplies the same matchup history, which is also how they were verified (17 week
 0.0 from an abandoned team, closest game 0.90 points).
 
 **Still open in fantasy:** general player compare. Note that "who should I start" is already
-answered more completely by the lineup optimiser and its swap list, so a compare view would be a
+answered more completely by the lineup optimizer and its swap list, so a compare view would be a
 research tool rather than a fantasy one — it belongs with the player pages, not here.
 
 **Buildable here now, in value order:**
@@ -477,7 +477,7 @@ research tool rather than a fantasy one — it belongs with the player pages, no
 1. **Matchup win probability and score distribution.** Simulate both lineups from
    `fantasy_weekly` projections plus a per-position variance fit from `player_week`. Nothing
    free does this well and the data is entirely on hand. The best thing on this list.
-2. **Lineup optimiser with swap cost.** Projections exist; needs roster rules from the sync.
+2. **Lineup optimizer with swap cost.** Projections exist; needs roster rules from the sync.
    "Start X over Y, +2.3 points" is the highest-frequency question in fantasy.
 3. **Power rankings with all-play and schedule luck.** All-play record — your score against
    every other team every week — separates a good team from a lucky one, and it is the most
@@ -485,13 +485,90 @@ research tool rather than a fantasy one — it belongs with the player pages, no
 4. **Streamer finder.** `fantasy_weekly` already carries the fitted matchup coefficient, so
    "free agents with the best draw this week" is one join away once the sync knows who is
    rostered.
-5. **Trade analyser, fantasy flavour.** Note this is *not* §3.4 — fantasy value is projected
+5. **Trade analyzer, fantasy flavour.** Note this is *not* §3.4 — fantasy value is projected
    points, which the store has, rather than dollar surplus, which it cannot support.
 6. **Recent moves.** Sleeper exposes a transaction log directly.
 
 **Deliberately not:** an AI chat layer. It is the fashionable feature and the least defensible
 on a site whose whole claim is published method — see §3.3, where the same capability earns its
 place only because it shows the SQL it generated.
+
+## 7c. Draft tools — requested 2026-08-18, not yet built
+
+Asked for directly; recorded here rather than built.
+
+### Mock draft simulator
+
+An NFL mock draft the user runs pick by pick: the other 31 teams pick on a
+model, the user picks for theirs, and the board updates. What it needs:
+
+- **Prospect board.** `load_draft_picks` gives every historical pick, so a
+  finished draft can be replayed and the model backtested against what actually
+  happened. It does **not** give a forward-looking board for an undrafted class —
+  that is a consensus big board, which is somebody's product, not open data.
+  Without one the simulator can only replay past drafts, which is still a real
+  feature and is honest about what it is.
+- **A pick model.** Team needs from the roster and depth charts, positional
+  value from the existing trade/draft-value curves already in the pipeline
+  (`draft.py`, `trade.py` fit these at build time), and the historical tendency
+  of each team to reach or trade back.
+- **Trade offers.** The pick-value curve is already fit, so an offer generator
+  is a short step from it.
+
+### Other draft work wanted
+
+- Team needs by position, from depth charts and contracts expiring.
+- Draft capital by team across years, valued on the fitted curve.
+- Historical pick-by-pick value returned versus slot expectation — which teams
+  actually beat their draft position, backtested rather than asserted.
+- Combine data is available (`load_combine`), so athletic profiles against draft
+  slot and against career outcome are all computable.
+
+## 7d. Luck carry-over — requested 2026-08-18, not yet built
+
+Asked for directly; recorded here rather than built.
+
+**The idea.** Measure how lucky or unlucky each team was in a season, then ask
+what that buys you about the *next* season. If a team is extremely lucky or
+extremely unlucky, how much of that should be regressed away when projecting
+them forward — and does the residual predict anything the base model misses?
+
+**Why it is worth doing.** Luck is the most common thing a fan gets wrong about
+a team's record, and it is the easiest thing this store can settle with a
+backtest rather than an assertion. It also feeds two things already built:
+`/playoffs` (preseason odds) and `/market` (where the model's disagreements
+with the line have to come from somewhere).
+
+**What luck could be measured as** — all of these are already derivable from
+`data/parquet`:
+
+- Record against Pythagorean expectation from points scored and allowed
+  (`team_season`, `standings`).
+- Record in one-score games, against the league's base rate.
+- Turnover margin and, separately, fumble recovery rate — recovery is close to
+  a coin flip and is the cleanest single luck signal in football.
+- Opponent field goal percentage against expectation.
+- Injury luck — games lost by starters, from `injury_reports` and the depth
+  charts, against `injury_rates`.
+- EPA-based record against actual record, now that EPA is the site's headline
+  currency.
+
+**What the analysis should answer**, in this order:
+
+1. How much does each luck measure regress year over year? A measure that
+   persists is not luck; it is a skill the model should be crediting.
+2. Does year-N luck predict year-N+1 *change in wins*, after controlling for
+   year-N EPA? This is the actual question.
+3. Which luck measures add anything beyond Pythagorean, which is the standard
+   baseline and already computable.
+
+**Publish the null result if there is one.** The likely finding is that most of
+this is already priced into Pythagorean and into the market, and the honest
+version of this page says so — the same way `/market` does.
+
+**Effort: M.** Data entirely on hand; the work is the backtest and the writing.
+
+---
 
 ## 8. Suggested order
 

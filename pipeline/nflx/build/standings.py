@@ -15,7 +15,7 @@ from ..util import round_cols, step, write_parquet
 
 # nflverse labels a game with the abbreviation the club used that season, and
 # the teams table holds only the 32 current codes. The tiebreaker tree drops
-# any game whose participants it does not recognise, so without this fold every
+# any game whose participants it does not recognize, so without this fold every
 # St Louis, San Diego and Oakland game vanished from the 1999–2019 records —
 # taking three divisions down to three clubs and skewing conference record,
 # common games and strength of victory for everyone who played them.

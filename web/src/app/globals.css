@@ -12,7 +12,7 @@
      ground under a navy masthead is the default palette of every admin
      template ever generated, and it made considered work look automatic.
      Warm paper under a cool navy is the pairing financial print has used for
-     a century: the two are far enough apart that the brand colour reads as a
+     a century: the two are far enough apart that the brand color reads as a
      deliberate choice rather than a tint of the background. */
   --ground: #f3f1ed;
   --panel: #ffffff;
@@ -105,7 +105,7 @@ body {
 @layer components {
   /* ---------- type ---------- */
   /* Small-caps everywhere is the tell of a template. Hierarchy comes from
-     weight, size and colour instead, which is how print and every serious data
+     weight, size and color instead, which is how print and every serious data
      publication has always done it. */
   .label {
     font-size: 11.5px;
@@ -121,9 +121,9 @@ body {
   }
 
   /* `body` sets Inter's character variants (cv05, cv08, ss03), and
-     font-feature-settings inherits — so those tags were being applied to IBM
-     Plex Mono too, where the same names mean different things and ss03 turns
-     on its dotted zero. Figures opt out of the inherited set entirely. */
+     font-feature-settings inherits — so those tags were being applied to the
+     mono face too, where the same tag names mean different things. Figures opt
+     out of the inherited set entirely. */
   .num {
     font-family: var(--font-data), monospace;
     font-feature-settings: normal;
@@ -353,6 +353,30 @@ body {
      following its row up the table and claiming a line that isn't a cut. */
   .grid-table:not(:has(th[aria-sort])) tbody tr[data-cut] > td {
     border-top: 2px solid var(--navy);
+  }
+
+
+  /* Snap sheet: a header row per position group.
+     `.grid-table th` is sticky to the top of the scroller, which is right for a
+     single header but wrong here — every group's header would pile up at the
+     top of the panel on top of each other. These scroll with their group. */
+  .snap-grid .snap-head th {
+    position: static;
+    background: var(--panel-2);
+    border-top: 1px solid var(--rule-strong);
+  }
+
+  /* Roomier rows. Two figures stacked in a cell need vertical air or they read
+     as one clump, and the count is the smaller of the two. */
+  .snap-grid td {
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 13.5px;
+  }
+
+  .snap-grid .snap-count {
+    font-size: 11.5px;
+    color: var(--ink-3);
   }
 
   .grid-table tbody tr:hover {

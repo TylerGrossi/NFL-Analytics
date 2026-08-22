@@ -12,7 +12,7 @@ against 2006-2025 before being used:
    third of the weight of the actual, and no more.
 3. A second prior season adds far more than the expected-points term does
    (R2 0.588 to 0.632). Two years of evidence beat one.
-4. Ageing is real and strongly position-dependent. Backs start losing ground at
+4. Aging is real and strongly position-dependent. Backs start losing ground at
    26 and fall away hard; receivers hold to about 26; tight ends and
    quarterbacks decline gently and late.
 
@@ -41,7 +41,7 @@ MIN_GAMES = 6
 # positional mean by games / (games + k). Without this a back who averaged
 # sixteen points across six games is trusted exactly as much as one who did it
 # across seventeen, which is how a draft board ends up in love with a backup
-# who had two good afternoons. Fit over 2006-2025: k = 4 minimises next-season
+# who had two good afternoons. Fit over 2006-2025: k = 4 minimizes next-season
 # error (RMSE 3.571 against 3.613 with no shrinkage).
 SHRINK_GAMES = 4.0
 

@@ -4,12 +4,12 @@
 salary, prorated bonus, guaranteed salary and the resulting cap number — which
 is what makes cut and restructure math honest rather than a guess at APY.
 
-Two mechanics are modelled:
+Two mechanics are modeled:
 
 * **Release.** Prorated bonus for the current year and every year after it
   accelerates onto this year's cap. Guaranteed salary for the current year stays
   owed. Everything else comes off. That is a pre-June-1 cut; the post-June-1
-  split is not modelled.
+  split is not modeled.
 * **Restructure.** Base salary above the league minimum converts to signing
   bonus and spreads over the remaining years, capped at five. It creates cap
   room now and a larger bill later.

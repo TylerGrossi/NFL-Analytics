@@ -150,7 +150,12 @@ def _team_returns(mature: pl.DataFrame, curve: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def build(seasons: list[int], index: pl.DataFrame, war_career: pl.DataFrame) -> pl.DataFrame:
+def build(
+    seasons: list[int],
+    index: pl.DataFrame,
+    war_career: pl.DataFrame,
+    career_epa: pl.DataFrame | None = None,
+) -> pl.DataFrame:
     with step("draft"):
         # The draft is a historical question and does not touch play-by-play, so
         # it spans every class on record rather than the caller's pbp window.
@@ -191,6 +196,14 @@ def build(seasons: list[int], index: pl.DataFrame, war_career: pl.DataFrame) -> 
             )
             .join(
                 war_career.select("player_id", "career_war", "career_par"),
+                on="player_id", how="left",
+            )
+            # The board prices a pick in career EPA; WAR rides along because
+            # /war and the pick-currency comparison still read it.
+            .join(
+                (career_epa if career_epa is not None else pl.DataFrame(
+                    schema={"player_id": pl.String, "career_epa": pl.Float64}
+                )).select("player_id", "career_epa"),
                 on="player_id", how="left",
             )
             .join(curve.select("pick", pl.col("value").alias("pick_expected")), on="pick", how="left")

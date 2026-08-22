@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PickCurrency } from "@/components/PickCurrency";
-import { Deck, Empty, Panel, PageHead, SectionRule, StatRow, StatTile, TeamMark } from "@/components/ui";
+import { Empty, Panel, PageHead, SectionRule, StatRow, StatTile, TeamMark } from "@/components/ui";
 import { PickCurve } from "@/components/PickCurve";
 import { SeasonNav } from "@/components/SeasonNav";
 import {
@@ -50,7 +50,6 @@ export default async function DraftPage({
     <>
       <PageHead>Draft</PageHead>
 
-      <Deck>What a pick is actually worth, across twenty-seven drafts.</Deck>
 
       <StatRow spaced className="mb-5">
         <StatTile label="Pick 1" value={num(at(1)?.value, 1)} />
@@ -167,7 +166,7 @@ export default async function DraftPage({
                   <th>AV</th>
                   <th>Exp</th>
                   <th>+/−</th>
-                  <th>WAR</th>
+                  <th>EPA</th>
                   <th>40</th>
                 </tr>
               </thead>
@@ -209,7 +208,7 @@ export default async function DraftPage({
                       {p.over_expected === null ? "—" : signed(p.over_expected, 0)}
                     </td>
                     <td className="num text-ink-2">
-                      {p.career_war === null ? "—" : num(p.career_war, 1)}
+                      {p.career_epa === null ? "—" : num(p.career_epa, 0)}
                     </td>
                     <td className="num text-ink-3">{p.forty === null ? "—" : num(p.forty, 2)}</td>
                   </tr>

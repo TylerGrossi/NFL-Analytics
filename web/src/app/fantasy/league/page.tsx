@@ -386,7 +386,7 @@ export default async function LeaguePage({
               moves={moves}
               nameOf={(sid) =>
                 sleeperNames.get(sid) ??
-                // A team defence is keyed by club abbreviation and has no
+                // A team defense is keyed by club abbreviation and has no
                 // nflverse player row, so it never reaches the bridge.
                 (/^[A-Z]{2,4}$/.test(sid) ? `${sid} D/ST` : `#${sid}`)
               }

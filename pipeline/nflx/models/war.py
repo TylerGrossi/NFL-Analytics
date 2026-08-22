@@ -317,7 +317,7 @@ def fit_role(plays: pl.DataFrame, role: str, alpha: float | None = None,
 
 
 def _replacement_level(role: str, rows: pl.DataFrame, usage: dict[str, int]) -> float:
-    """What a club gets from the men it can find, measured not modelled.
+    """What a club gets from the men it can find, measured not modeled.
 
     This used to be the usage-weighted mean of the *fitted* coefficients for
     players outside the starter pool. That made replacement a function of the

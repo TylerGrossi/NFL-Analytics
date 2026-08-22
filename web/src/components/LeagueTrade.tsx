@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Empty, Panel } from "@/components/ui";
 import type { League, LeagueTeam, WeekScore } from "@/lib/leagues";
 import type { WeekProj } from "@/lib/queries";
-import { optimiseLineup, type Candidate } from "@/lib/fantasyMath";
+import { optimizeLineup, type Candidate } from "@/lib/fantasyMath";
 import { toCandidates } from "@/components/LeagueTools";
 import { num, signed } from "@/lib/format";
 
@@ -47,14 +47,14 @@ export function TradeSimulator({
     gain: Candidate[]
   ) => {
     const losing = new Set(lose.map((p) => p.playerId));
-    return optimiseLineup(
+    return optimizeLineup(
       [...roster.filter((p) => !losing.has(p.playerId)), ...gain],
       league.slots
     ).total;
   };
 
-  const myBefore = optimiseLineup(myRoster, league.slots).total;
-  const theirBefore = optimiseLineup(theirRoster, league.slots).total;
+  const myBefore = optimizeLineup(myRoster, league.slots).total;
+  const theirBefore = optimizeLineup(theirRoster, league.slots).total;
   const myAfter = after(myRoster, outgoing, incoming);
   const theirAfter = after(theirRoster, incoming, outgoing);
 

@@ -104,7 +104,7 @@ screen.
 A scheduled game gets a projected score, win probability and model line. Team strength blends last
 season's opponent-adjusted rating with this season's scoring margin, weighted `n / (n + 8)` in games
 played — so week 1 rests entirely on the carried rating and the handover is gradual. The carryover
-is measured, not assumed: net rating persists year to year at 0.47, offence at 0.49 and defence at
+is measured, not assumed: net rating persists year to year at 0.47, offense at 0.49 and defense at
 only 0.34, which is the familiar result that defensive performance is the less repeatable half.
 
 Every coefficient is fit at build time against real results. Walk-forward across 5,455 games from
@@ -136,9 +136,9 @@ blend the previews use, expected wins run 5.5 to 10.9 and playoff odds 4.7% to 8
 wins sum to exactly 272, one per game, which is the arithmetic check that the simulation is sound.
 
 **A sign convention worth stating**: nflverse stores `spread_line` as the points the *home* team is
-favoured by, so a home favourite is positive. A posted betting line states the favourite as a
+favored by, so a home favorite is positive. A posted betting line states the favorite as a
 negative number. `line()` in `web/src/lib/format.ts` does the flip, because printing the stored
-value directly labels every favourite as an underdog.
+value directly labels every favorite as an underdog.
 
 ## Separation and coverage
 
@@ -245,7 +245,7 @@ same as a three-week interim spell.
 
 The Lab asks the play store directly rather than reading a precomputed page, so any combination of
 filters is fair game: third and long from the red zone, 12 personnel against man coverage, trailing
-in the fourth quarter. Group by team offence, team defence, quarterback, ball carrier or receiver.
+in the fourth quarter. Group by team offense, team defense, quarterback, ball carrier or receiver.
 
 Every filter is an entry in a fixed table in `web/src/lib/splits.ts` that owns its own SQL fragment.
 Nothing a visitor types reaches the query — an unknown key does not match an entry and is dropped.
@@ -253,7 +253,7 @@ Filters needing charted data switch the source from the full 1.28M-play store to
 charted store, which is why they carry a start season.
 
 Results are compared against the league average **for the same split**, not the league overall. A
-red zone leaderboard is judged against red zone offence, which is the comparison that means
+red zone leaderboard is judged against red zone offense, which is the comparison that means
 something; measuring red zone plays against all-downs average would rank every team below average.
 
 ## The week in review

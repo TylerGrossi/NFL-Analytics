@@ -1,6 +1,6 @@
 import { chromium } from "playwright";
 const routes = ["/", "/scores", "/standings", "/playoffs", "/teams", "/teams/KC", "/stats",
-  "/war", "/separation", "/lab", "/market", "/tools/fourth-down", "/tools/armchair-gm",
+  "/war", "/separation", "/lab", "/visuals", "/snaps", "/market", "/tools/fourth-down", "/tools/armchair-gm",
   "/players/00-0033873", "/games/2025_22_SEA_NE",
   "/games/2026_01_NE_SEA",
   "/draft",

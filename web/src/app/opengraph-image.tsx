@@ -16,7 +16,7 @@ export default async function Image() {
     ogCard({
       eyebrow: "NFL analytics, built on open data",
       title: SITE.name,
-      subtitle: "Opponent-adjusted efficiency, WAR with published backtests, and a live play store",
+      subtitle: "Opponent-adjusted efficiency, player value in EPA, and a live play store",
       stats: c
         ? [
             ogStat("Plays", fmt(c.plays)),

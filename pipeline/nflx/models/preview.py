@@ -2,7 +2,7 @@
 
 A team that has not played yet still has to be rated, so the projection blends
 two sources. Last season's opponent-adjusted rating carries over — measured at
-0.47 for net rating, and notably weaker for defence (0.34) than offence (0.49),
+0.47 for net rating, and notably weaker for defense (0.34) than offense (0.49),
 which is the long-standing finding that defensive performance is the less
 repeatable half. Season-to-date scoring margin then takes over as games
 accumulate, weighted n / (n + k).
@@ -23,7 +23,7 @@ from scipy.special import ndtr
 from ..util import log
 
 # Games of the current season before in-season form outweighs the carried
-# rating. Fit over 1999-2025: error is flat from 6 to 12, minimised at 8.
+# rating. Fit over 1999-2025: error is flat from 6 to 12, minimized at 8.
 BLEND_K = 8.0
 
 
@@ -123,7 +123,7 @@ def fit(games: pl.DataFrame, team_season: pl.DataFrame) -> MarginModel:
     resid = margin - X @ beta
     sd = float(np.std(resid))
 
-    # Totals: combined offence minus combined defence, same blend.
+    # Totals: combined offense minus combined defense, same blend.
     off_edge = (d["home_carry_off"] + d["away_carry_off"]
                 - d["home_carry_def"] - d["away_carry_def"]).to_numpy()
     scored = (d["home_scored"] + d["away_scored"]).to_numpy()
@@ -208,7 +208,7 @@ def preseason_ratings(
     """Team strength in points, blended exactly as the game projections blend it.
 
     The season simulation needs the same numbers the preview pages show, or the
-    site contradicts itself: a club cannot be a 62% favourite in every game it
+    site contradicts itself: a club cannot be a 62% favorite in every game it
     plays and simultaneously 99% to reach the playoffs. Applying last season's
     rating at full strength to a season nobody has played is what produces that,
     since ratings only carry over at 0.47.

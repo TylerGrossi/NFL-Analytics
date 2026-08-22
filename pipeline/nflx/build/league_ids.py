@@ -14,8 +14,8 @@ first layer that finds him:
 
 1. `gsis_id` — exact, when Sleeper supplies it.
 2. `espn_id` — against the `espn_id` already in our player index.
-3. Normalised name + position + current club.
-4. Normalised name + position, for a player who has just changed club.
+3. Normalized name + position + current club.
+4. Normalized name + position, for a player who has just changed club.
 
 Together those reach about 91%. The residue is overwhelmingly rookies and
 undrafted free agents who have not played an NFL snap, so nflverse has no row
